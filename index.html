@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gasoline Price Tracker 🛢️</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
+    <style>
+        :root {
+  /* Primitive Color Tokens */
+  --color-white: rgba(255, 255, 255, 1);
+  --color-black: rgba(0, 0, 0, 1);
+  --color-cream-50: rgba(252, 252, 249, 1);
+  --color-cream-100: rgba(255, 255, 253, 1);
+  --color-gray-200: rgba(245, 245, 245, 1);
+  --color-gray-300: rgba(167, 169, 169, 1);
+  --color-gray-400: rgba(119, 124, 124, 1);
+  --color-slate-500: rgba(98, 108, 113, 1);
+  --color-brown-600: rgba(94, 82, 64, 1);
+  --color-charcoal-700: rgba(31, 33, 33, 1);
+  --color-charcoal-800: rgba(38, 40, 40, 1);
+  --color-slate-900: rgba(19, 52, 59, 1);
+  --color-teal-300: rgba(50, 184, 198, 1);
+  --color-teal-400: rgba(45, 166, 178, 1);
+  --color-teal-500: rgba(33, 128, 141, 1);
+  --color-teal-600: rgba(29, 116, 128, 1);
+  --color-teal-700: rgba(26, 104, 115, 1);
+  --color-teal-800: rgba(41, 150, 161, 1);
+  --color-red-400: rgba(255, 84, 89, 1);
+  --color-red-500: rgba(192, 21, 47, 1);
+  --color-orange-400: rgba(230, 129, 97, 1);
+  --color-orange-500: rgba(168, 75, 47, 1);
+
+  --color-brown-600-rgb: 94, 82, 64;
+  --color-teal-500-rgb: 33, 128, 141;
+  --color-slate-900-rgb: 19, 52, 59;
+  --color-slate-500-rgb: 98, 108, 113;
+  --color-red-500-rgb: 192, 21, 47;
+  --color-red-400-rgb: 255, 84, 89;
+  --color-orange-500-rgb: 168, 75, 47;
+  --color-orange-400-rgb: 230, 129, 97;
+
+  --color-bg-1: rgba(59, 130, 246, 0.08);
+  --color-bg-2: rgba(245, 158, 11, 0.08);
+  --color-bg-3: rgba(34, 197, 94, 0.08);
+  --color-bg-4: rgba(239, 68, 68, 0.08);
+  --color-bg-5: rgba(147, 51, 234, 0.08);
+  --color-bg-6: rgba(249, 115, 22, 0.08);
+  --color-bg-7: rgba(236, 72, 153, 0.08);
+  --color-bg-8: rgba(6, 182, 212, 0.08);
+
+  --color-background: var(--color-cream-50);
+  --color-surface: var(--color-cream-100);
+  --color-text: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-500);
+  --color-primary: var(--color-teal-500);
+  --color-primary-hover: var(--color-teal-600);
+  --color-primary-active: var(--color-teal-700);
+  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
+  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-btn-primary-text: var(--color-cream-50);
+  --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-error: var(--color-red-500);
+  --color-success: var(--color-teal-500);
+  --color-warning: var(--color-orange-500);
+  --color-info: var(--color-slate-500);
+  --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
+  --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
+
+  --focus-ring: 0 0 0 3px var(--color-focus-ring);
+  --focus-outline: 2px solid var(--color-primary);
+
+  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 30px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 550;
+  --font-weight-bold: 600;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  --radius-sm: 6px;
+  --radius-base: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-gray-400-rgb: 119, 124, 124;
+    --color-teal-300-rgb: 50, 184, 198;
+    --color-gray-300-rgb: 167, 169, 169;
+    --color-gray-200-rgb: 245, 245, 245;
+
+    --color-bg-1: rgba(29, 78, 216, 0.15);
+    --color-bg-2: rgba(180, 83, 9, 0.15);
+    --color-bg-3: rgba(21, 128, 61, 0.15);
+    --color-bg-4: rgba(185, 28, 28, 0.15);
+    --color-bg-5: rgba(107, 33, 168, 0.15);
+    --color-bg-6: rgba(194, 65, 12, 0.15);
+    --color-bg-7: rgba(190, 24, 93, 0.15);
+    --color-bg-8: rgba(8, 145, 178, 0.15);
+
+    --color-background: var(--color-charcoal-700);
+    --color-surface: var(--color-charcoal-800);
+    --color-text: var(--color-gray-200);
+    --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
+    --color-primary: var(--color-teal-300);
+    --color-primary-hover: var(--color-teal-400);
+    --color-primary-active: var(--color-teal-800);
+    --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
+    --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
+    --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
+    --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+    --color-error: var(--color-red-400);
+    --color-success: var(--color-teal-300);
+    --color-warning: var(--color-orange-400);
+    --color-info: var(--color-gray-300);
+    --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
+    --color-btn-primary-text: var(--color-slate-900);
+    --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
+    --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
+    --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
+
+    --color-success-rgb: var(--color-teal-300-rgb);
+    --color-error-rgb: var(--color-red-400-rgb);
+    --color-warning-rgb: var(--color-orange-400-rgb);
+    --color-info-rgb: var(--color-gray-300-rgb);
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dashboard-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-teal-700) 100%);
+  color: var(--color-cream-50);
+  padding: var(--space-32) var(--space-24);
+  box-shadow: var(--shadow-lg);
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-8);
+}
+
+.header-subtitle {
+  font-size: var(--font-size-lg);
+  opacity: 0.95;
+  margin-bottom: var(--space-16);
+}
+
+.header-info {
+  display: flex;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-base);
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-32) var(--space-24);
+  width: 100%;
+}
+
+.quick-stats {
+  margin-bottom: var(--space-32);
+}
+
+.quick-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-20);
+}
+
+.quick-stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-20);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quick-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.quick-stat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-12);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.quick-stat-icon {
+  font-size: var(--font-size-xl);
+}
+
+.quick-stat-price {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+}
+
+.quick-stat-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+}
+
+.quick-stat-date {
+  color: var(--color-text-secondary);
+}
+
+.quick-stat-change {
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-sm);
+}
+
+.quick-stat-change.up {
+  color: var(--color-error);
+  background: var(--color-bg-4);
+}
+
+.quick-stat-change.down {
+  color: var(--color-success);
+  background: var(--color-bg-3);
+}
+
+.date-range-nav {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16);
+  margin-bottom: var(--space-32);
+  box-shadow: var(--shadow-sm);
+}
+
+.date-range-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-12);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.date-range-buttons {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.date-range-btn {
+  padding: var(--space-12) var(--space-20);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-base);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family-base);
+}
+
+.date-range-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-secondary);
+}
+
+.date-range-btn.active {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  border-color: var(--color-primary);
+}
+
+.section {
+  margin-bottom: var(--space-32);
+}
+
+.section-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-20);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-20);
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card-header {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: var(--space-16);
+}
+
+.stat-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--color-card-border-inner);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.stat-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.stat-value.high {
+  color: var(--color-error);
+}
+
+.stat-value.low {
+  color: var(--color-success);
+}
+
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-24);
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  margin-top: var(--space-20);
+}
+
+.table-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.table-actions {
+  display: flex;
+  gap: var(--space-12);
+  margin-bottom: var(--space-20);
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: var(--space-12) var(--space-20);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-base);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family-base);
+}
+
+.btn:hover {
+  background: var(--color-secondary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-base);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+thead {
+  background: var(--color-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+th {
+  padding: var(--space-12) var(--space-16);
+  text-align: left;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+th:hover {
+  background: var(--color-secondary-hover);
+}
+
+td {
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--color-card-border-inner);
+  color: var(--color-text);
+}
+
+tbody tr:hover {
+  background: var(--color-secondary);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-20);
+}
+
+.insight-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-20);
+  box-shadow: var(--shadow-sm);
+}
+
+.insight-card.event {
+  border-left: 4px solid var(--color-warning);
+}
+
+.insight-date {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-8);
+}
+
+.insight-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+}
+
+.insight-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-32);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  background: var(--color-bg-4);
+  border: 2px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  padding: var(--space-20);
+  margin: var(--space-24);
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+.footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-card-border);
+  padding: var(--space-24);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .date-range-buttons {
+    flex-direction: column;
+  }
+
+  .date-range-btn {
+    width: 100%;
+  }
+
+  .quick-stats-grid,
+  .stats-grid,
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeIn 0.3s ease;
+}
+.price-up {
+  color: #e53935; /* đỏ */
+  background-color: #ffebee;
+}
+
+.price-down {
+  color: #1e88e5; /* xanh */
+  background-color: #e3f2fd;
+}
+
+.change-percent {
+  margin-left: 6px;
+  font-size: 0.9rem;
+}
+
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🛢️ Gasoline Price Tracker</h1>
+                <div class="header-subtitle">Real-time prices and historical trends (2019-2025)</div>
+                <div class="header-info">
+                    <div>📅 <strong>Last Update:</strong> <span id="lastUpdate">28/11/2025 17:00</span></div>
+                    <div>🔄 <strong>Update Frequency:</strong> Every 7 days at 17:00</div>
+                    <div>📊 <strong>Total Records:</strong> <span id="totalRecords">Loading...</span></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div id="loadingMessage" class="loading">⏳ Loading data from CSV...</div>
+            <div id="errorMessage" class="error" style="display: none;"></div>
+            <div id="dashboardContent" style="display: none;">
+                <!-- Quick Stats Cards -->
+                <section class="quick-stats">
+                    <div class="quick-stats-grid" id="quickStatsGrid"></div>
+                </section>
+
+                <!-- Date Range Selector -->
+                <section class="date-range-nav">
+                    <div class="date-range-label">📊 Select Date Range</div>
+                    <div class="date-range-buttons">
+                        <button class="date-range-btn" onclick="selectRange('1M')" data-range="1M">📊 1M</button>
+                        <button class="date-range-btn" onclick="selectRange('3M')" data-range="3M">📊 3M</button>
+                        <button class="date-range-btn" onclick="selectRange('6M')" data-range="6M">📊 6M</button>
+                        <button class="date-range-btn" onclick="selectRange('1Y')" data-range="1Y">📊 1Y</button>
+                        <button class="date-range-btn" onclick="selectRange('3Y')" data-range="3Y">📊 3Y</button>
+                        <button class="date-range-btn active" onclick="selectRange('ALL')" data-range="ALL">📊 ALL</button>
+                    </div>
+                </section>
+
+                <!-- Statistics Panel -->
+                <section class="section">
+                    <h2 class="section-title">📊 Statistics for Selected Range</h2>
+                    <div class="stats-grid" id="statsGrid"></div>
+                </section>
+
+                <!-- Main Chart -->
+                <section class="section">
+                    <div class="chart-card">
+                        <h2 class="section-title">📈 Price Trends</h2>
+                        <div class="chart-container">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Market Insights -->
+                <section class="section">
+                    <h2 class="section-title">💡 Market Insights &amp; Key Events</h2>
+                    <div class="insights-grid">
+                        <div class="insight-card event">
+                            <div class="insight-date">📅 20/04/2020</div>
+                            <div class="insight-title">COVID-19 Impact</div>
+                            <div class="insight-desc">Oil prices crashed during pandemic lockdowns. Global demand dropped significantly affecting all fuel products.</div>
+                        </div>
+                        <div class="insight-card event">
+                            <div class="insight-date">📅 30/06/2022</div>
+                            <div class="insight-title">Energy Crisis</div>
+                            <div class="insight-desc">Prices peaked during global energy crisis. Supply chain disruptions and geopolitical tensions drove prices to historic highs.</div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-date">📅 03/11/2025</div>
+                            <div class="insight-title">Current Market</div>
+                            <div class="insight-desc">Market shows moderate stability with controlled volatility. Prices remain relatively stable compared to previous years.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Table -->
+                <section class="section">
+                    <div class="table-card">
+                        <h2 class="section-title">📋 Historical Price Data</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-primary" onclick="exportCSV()">📥 Export CSV</button>
+                            <button class="btn" onclick="exportJSON()">📥 Export JSON</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable(0)">Date ⬍</th>
+                                        <th onclick="sortTable(1)">Product ⬍</th>
+                                        <th onclick="sortTable(2)">Price (VNĐ) ⬍</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div>© 2025 PVOIL Oil Price Tracker | Data updated every 7 days at 15:00 | Historical data from 2019-2025</div>
+        </footer>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let currentRange = 'ALL';
+        let priceChart = null;
+
+        const productMap = {
+            'Xăng RON 95-III': { code: 'ron95', color: '#EF4444', icon: '⛽' },
+            'Xăng E5 RON 92-II': { code: 'e5', color: '#3B82F6', icon: '⛽' },
+            'Dầu DO 0,05S-II': { code: 'do', color: '#10B981', icon: '🛢️' },
+            'Dầu KO': { code: 'ko', color: '#F59E0B', icon: '🛢️' }
+        };
+
+        // Load CSV data
+        function loadData() {
+            Papa.parse('pvoil_gasoline_prices_full.csv', {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        allData = results.data.map(row => ({
+                            date: row['Ngày'] || row['Date'] || row['date'],
+                            product: row['Mặt hàng'] || row['Product'] || row['product'],
+                            price: parseFloat(row['Giá (VND)'] || row['Price'] || row['price'])
+                        })).filter(d => d.date && d.product && !isNaN(d.price));
+
+                        if (allData.length > 0) {
+                            document.getElementById('totalRecords').textContent = `${allData.length} entries`;
+                            document.getElementById('loadingMessage').style.display = 'none';
+                            document.getElementById('dashboardContent').style.display = 'block';
+                            selectRange('ALL');
+                        } else {
+                            showError('No valid data found in CSV file');
+                        }
+                    } else {
+                        showError('Failed to parse CSV data');
+                    }
+                },
+                error: function(error) {
+                    showError('Error loading CSV: ' + error.message);
+                }
+            });
+        }
+
+        function showError(message) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('errorMessage').textContent = '❌ ' + message;
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        // Format functions
+        function formatVND(number) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(number));
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return new Date(dateStr);
+        }
+
+        function formatDate(dateStr) {
+            const date = parseDate(dateStr);
+            if (!date || isNaN(date)) return dateStr;
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Filter data by range
+        function filterDataByRange(range) {
+            if (allData.length === 0) return [];
+            
+            const sortedData = [...allData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            const lastDate = parseDate(sortedData[sortedData.length - 1].date);
+            let startDate;
+
+            switch(range) {
+                case '1M':
+                    startDate = new Date(lastDate);
+                    startDate.setMonth(startDate.getMonth() - 1);
+                    break;
+                case '3M':
+                    startDate = new Date(lastDate);
+                    startDate.setMonth(startDate.getMonth() - 3);
+                    break;
+                case '6M':
+                    startDate = new Date(lastDate);
+                    startDate.setMonth(startDate.getMonth() - 6);
+                    break;
+                case '1Y':
+                    startDate = new Date(lastDate);
+                    startDate.setFullYear(startDate.getFullYear() - 1);
+                    break;
+                case '3Y':
+                    startDate = new Date(lastDate);
+                    startDate.setFullYear(startDate.getFullYear() - 3);
+                    break;
+                case 'ALL':
+                default:
+                    return sortedData;
+            }
+
+            return sortedData.filter(d => parseDate(d.date) >= startDate);
+        }
+
+        // Select range
+        function selectRange(range) {
+            currentRange = range;
+            filteredData = filterDataByRange(range);
+
+            document.querySelectorAll('.date-range-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-range') === range) {
+                    btn.classList.add('active');
+                }
+            });
+
+            updateDashboard();
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            updateQuickStats();
+            updateStatistics();
+            updateChart();
+            updateTable();
+        }
+
+        // Update quick stats
+        function updateQuickStats() {
+            const mainProducts = ['Xăng RON 95-III', 'Xăng E5 RON 92-II', 'Dầu DO 0,05S-II', 'Dầu KO'];
+            const quickStatsGrid = document.getElementById('quickStatsGrid');
+            
+            quickStatsGrid.innerHTML = mainProducts.map(productName => {
+                const productData = filteredData.filter(d => d.product === productName);
+                if (productData.length === 0) return '';
+                
+                const sortedData = productData.sort((a, b) => parseDate(b.date) - parseDate(a.date));
+                const latestPrice = sortedData[0].price;
+                const latestDate = sortedData[0].date;
+                const prevPrice = sortedData.length > 1 ? sortedData[1].price : latestPrice;
+                const change = latestPrice - prevPrice;
+const relativeChange = calcRelativeChange(latestPrice, change);
+     const changeClass = change > 0 ? 'up' : change < 0 ? 'down' : '';
+     const changeIcon = change > 0 ? '↑' : change < 0 ? '↓' : '→';
+     const changeText = `${changeIcon} ${formatVND(Math.abs(change))} VNĐ`;
+     const relativeText = `${changeIcon} ${Math.abs(relativeChange).toFixed(2)}%`;
+     const productInfo = productMap[productName];
+     
+     return `
+     <div class="quick-stat-card animate-in">
+     <div class="quick-stat-header">
+     <span class="quick-stat-icon">${productInfo.icon}</span>
+     <span>${productName}</span>
+     </div>
+     <div class="quick-stat-price">${formatVND(latestPrice)} VNĐ/lít</div>
+     <div class="quick-stat-info">
+     <span class="quick-stat-date">${formatDate(latestDate)}</span>
+     <div style="display: flex; gap: 8px;">
+     <span class="quick-stat-change ${changeClass}">${changeText}</span>
+     <span class="quick-stat-change ${changeClass}">${relativeText}</span>
+     </div>
+     </div>
+     </div>`}).join('');
+   }
+
+        // Update statistics
+        function updateStatistics() {
+            const statsGrid = document.getElementById('statsGrid');
+            const products = Object.keys(productMap);
+            
+            statsGrid.innerHTML = products.map(productName => {
+                const productData = filteredData.filter(d => d.product === productName);
+                if (productData.length === 0) return '';
+                
+                const prices = productData.map(d => d.price);
+                const high = Math.max(...prices);
+                const low = Math.min(...prices);
+                const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+                
+                const highRecord = productData.find(d => d.price === high);
+                const lowRecord = productData.find(d => d.price === low);
+                
+                const sortedData = productData.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                const change = sortedData[sortedData.length - 1].price - sortedData[0].price;
+                const changePercent = ((change / sortedData[0].price) * 100).toFixed(2);
+                
+                return `
+                    <div class="stat-card animate-in">
+                        <div class="stat-card-header">${productName}</div>
+                        <div class="stat-items">
+                            <div class="stat-item">
+                                <span class="stat-label">Highest Price</span>
+                                <span class="stat-value high">${formatVND(high)} VNĐ</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Date</span>
+                                <span class="stat-value">${formatDate(highRecord.date)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Lowest Price</span>
+                                <span class="stat-value low">${formatVND(low)} VNĐ</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Date</span>
+                                <span class="stat-value">${formatDate(lowRecord.date)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Average Price</span>
+                                <span class="stat-value">${formatVND(avg)} VNĐ</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Period Change</span>
+                                <span class="stat-value ${change >= 0 ? 'high' : 'low'}">${change >= 0 ? '+' : ''}${formatVND(change)} VNĐ (${changePercent}%)</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        // New def
+        function calcRelativeChange(currentPrice, absChange) {
+            const prevPrice = currentPrice - absChange;
+            if (!prevPrice || prevPrice === 0) return 0;
+            return (absChange / prevPrice) * 100;
+  }
+
+        // Update chart
+        function updateChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            if (priceChart) priceChart.destroy();
+
+            const groupedData = {};
+            filteredData.forEach(d => {
+                if (!groupedData[d.date]) groupedData[d.date] = {};
+                groupedData[d.date][d.product] = d.price;
+            });
+
+            const sortedDates = Object.keys(groupedData).sort((a, b) => parseDate(a) - parseDate(b));
+            const labels = sortedDates.map(d => formatDate(d));
+
+            const datasets = Object.keys(productMap).map(productName => {
+                const productInfo = productMap[productName];
+                const data = sortedDates.map(date => groupedData[date][productName] || null);
+                
+                return {
+                    label: productName,
+                    data: data,
+                    borderColor: productInfo.color,
+                    backgroundColor: productInfo.color + '20',
+                    tension: 0.4,
+                    fill: false,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                };
+            });
+
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatVND(context.parsed.y) + ' VNĐ/lít';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatVND(value) + ' VNĐ';
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update table
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            const sortedData = [...filteredData].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+            
+            tbody.innerHTML = sortedData.map(d => `
+                <tr>
+                    <td>${formatDate(d.date)}</td>
+                    <td>${d.product}</td>
+                    <td>${formatVND(d.price)} VNĐ/lít</td>
+                </tr>
+            `).join('');
+        }
+
+        // Sort table
+        let sortDirection = {};
+        function sortTable(columnIndex) {
+            const direction = sortDirection[columnIndex] || 'asc';
+            sortDirection[columnIndex] = direction === 'asc' ? 'desc' : 'asc';
+
+            filteredData.sort((a, b) => {
+                let valA, valB;
+                
+                if (columnIndex === 0) {
+                    valA = parseDate(a.date);
+                    valB = parseDate(b.date);
+                } else if (columnIndex === 1) {
+                    valA = a.product;
+                    valB = b.product;
+                } else {
+                    valA = a.price;
+                    valB = b.price;
+                }
+
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            updateTable();
+        }
+
+        // Export functions
+        function exportCSV() {
+            let csv = 'Date,Product,Price (VNĐ/lít)\n';
+            filteredData.forEach(d => {
+                csv += `${d.date},${d.product},${d.price}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `pvoil_prices_${currentRange}_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function exportJSON() {
+            const json = JSON.stringify(filteredData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `pvoil_prices_${currentRange}_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
