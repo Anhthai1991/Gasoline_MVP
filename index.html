@@ -765,9 +765,25 @@ tbody tr:hover {
                         })).filter(d => d.date && d.product && !isNaN(d.price));
 
                         if (allData.length > 0) {
+
+                            // Sort data by date to find latest update
+                            const sorted = [...allData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                            const latestDate = sorted[sorted.length - 1].date;
+
+                            // Use current time or fixed time (17:00)
+                            const now = new Date();
+                            const hours = String(now.getHours()).padStart(2,'0');
+                            const minutes = String(now.getMinutes()).padStart(2,'0');
+
+                            const formattedLastUpdate = `${formatDate(latestDate)} ${hours}:${minutes}`;
+
+                            // Update UI
+                            document.getElementById('lastUpdate').textContent = formattedLastUpdate;
+
                             document.getElementById('totalRecords').textContent = `${allData.length} entries`;
                             document.getElementById('loadingMessage').style.display = 'none';
                             document.getElementById('dashboardContent').style.display = 'block';
+
                             selectRange('ALL');
                         } else {
                             showError('No valid data found in CSV file');
