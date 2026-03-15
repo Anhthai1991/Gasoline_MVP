@@ -49,12 +49,12 @@ crontab -e
 Thêm dòng:
 
 ```
-0 8 * * * cd /path/to/Fuel-VN-price && python update_pvoil_prices.py >> update.log 2>&1
+0 8 * * * cd /path/to/Gasoline_MVP && python update_pvoil_prices.py >> update.log 2>&1
 ```
 
 ### 3. Chạy Tự Động với GitHub Actions
 
-Tạo file `.github/workflows/auto-update.yml`:
+Tạo file `.github/workflows/auto-update.yml` (đã có sẵn trong repo):
 
 ```yaml
 name: Auto Update PVOIL Prices
@@ -92,7 +92,7 @@ jobs:
 4. Action: Start a program
    - Program: `python`
    - Arguments: `update_pvoil_prices.py`
-   - Start in: `/path/to/Fuel-VN-price`
+   - Start in: `/path/to/Gasoline_MVP`
 
 ## Cấu Trúc Script
 
@@ -174,7 +174,7 @@ python update_pvoil_prices.py 2>&1 | tee update.log
 git config --list
 
 # Setup SSH key hoặc use personal access token
-git remote set-url origin https://TOKEN@github.com/Anhthai1991/Fuel-VN-price.git
+git remote set-url origin https://TOKEN@github.com/Anhthai1991/Gasoline_MVP.git
 ```
 
 ### Dependencies lỗi
