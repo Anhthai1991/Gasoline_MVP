@@ -1,1142 +1,899 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gasoline Price Tracker 🛢️</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5"></script>
-    <style>
-        :root {
-  /* Primitive Color Tokens */
-  --color-white: rgba(255, 255, 255, 1);
-  --color-black: rgba(0, 0, 0, 1);
-  --color-cream-50: rgba(252, 252, 249, 1);
-  --color-cream-100: rgba(255, 255, 253, 1);
-  --color-gray-200: rgba(245, 245, 245, 1);
-  --color-gray-300: rgba(167, 169, 169, 1);
-  --color-gray-400: rgba(119, 124, 124, 1);
-  --color-slate-500: rgba(98, 108, 113, 1);
-  --color-brown-600: rgba(94, 82, 64, 1);
-  --color-charcoal-700: rgba(31, 33, 33, 1);
-  --color-charcoal-800: rgba(38, 40, 40, 1);
-  --color-slate-900: rgba(19, 52, 59, 1);
-  --color-teal-300: rgba(50, 184, 198, 1);
-  --color-teal-400: rgba(45, 166, 178, 1);
-  --color-teal-500: rgba(33, 128, 141, 1);
-  --color-teal-600: rgba(29, 116, 128, 1);
-  --color-teal-700: rgba(26, 104, 115, 1);
-  --color-teal-800: rgba(41, 150, 161, 1);
-  --color-red-400: rgba(255, 84, 89, 1);
-  --color-red-500: rgba(192, 21, 47, 1);
-  --color-orange-400: rgba(230, 129, 97, 1);
-  --color-orange-500: rgba(168, 75, 47, 1);
-
-  --color-brown-600-rgb: 94, 82, 64;
-  --color-teal-500-rgb: 33, 128, 141;
-  --color-slate-900-rgb: 19, 52, 59;
-  --color-slate-500-rgb: 98, 108, 113;
-  --color-red-500-rgb: 192, 21, 47;
-  --color-red-400-rgb: 255, 84, 89;
-  --color-orange-500-rgb: 168, 75, 47;
-  --color-orange-400-rgb: 230, 129, 97;
-
-  --color-bg-1: rgba(59, 130, 246, 0.08);
-  --color-bg-2: rgba(245, 158, 11, 0.08);
-  --color-bg-3: rgba(34, 197, 94, 0.08);
-  --color-bg-4: rgba(239, 68, 68, 0.08);
-  --color-bg-5: rgba(147, 51, 234, 0.08);
-  --color-bg-6: rgba(249, 115, 22, 0.08);
-  --color-bg-7: rgba(236, 72, 153, 0.08);
-  --color-bg-8: rgba(6, 182, 212, 0.08);
-
-  --color-background: var(--color-cream-50);
-  --color-surface: var(--color-cream-100);
-  --color-text: var(--color-slate-900);
-  --color-text-secondary: var(--color-slate-500);
-  --color-primary: var(--color-teal-500);
-  --color-primary-hover: var(--color-teal-600);
-  --color-primary-active: var(--color-teal-700);
-  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
-  --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
-  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
-  --color-btn-primary-text: var(--color-cream-50);
-  --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-error: var(--color-red-500);
-  --color-success: var(--color-teal-500);
-  --color-warning: var(--color-orange-500);
-  --color-info: var(--color-slate-500);
-  --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
-  --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
-
-  --focus-ring: 0 0 0 3px var(--color-focus-ring);
-  --focus-outline: 2px solid var(--color-primary);
-
-  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-size-sm: 12px;
-  --font-size-base: 14px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 20px;
-  --font-size-3xl: 24px;
-  --font-size-4xl: 30px;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 550;
-  --font-weight-bold: 600;
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.5;
-
-  --space-4: 4px;
-  --space-8: 8px;
-  --space-12: 12px;
-  --space-16: 16px;
-  --space-20: 20px;
-  --space-24: 24px;
-  --space-32: 32px;
-
-  --radius-sm: 6px;
-  --radius-base: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-gray-400-rgb: 119, 124, 124;
-    --color-teal-300-rgb: 50, 184, 198;
-    --color-gray-300-rgb: 167, 169, 169;
-    --color-gray-200-rgb: 245, 245, 245;
-
-    --color-bg-1: rgba(29, 78, 216, 0.15);
-    --color-bg-2: rgba(180, 83, 9, 0.15);
-    --color-bg-3: rgba(21, 128, 61, 0.15);
-    --color-bg-4: rgba(185, 28, 28, 0.15);
-    --color-bg-5: rgba(107, 33, 168, 0.15);
-    --color-bg-6: rgba(194, 65, 12, 0.15);
-    --color-bg-7: rgba(190, 24, 93, 0.15);
-    --color-bg-8: rgba(8, 145, 178, 0.15);
-
-    --color-background: var(--color-charcoal-700);
-    --color-surface: var(--color-charcoal-800);
-    --color-text: var(--color-gray-200);
-    --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
-    --color-primary: var(--color-teal-300);
-    --color-primary-hover: var(--color-teal-400);
-    --color-primary-active: var(--color-teal-800);
-    --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
-    --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
-    --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
-    --color-border: rgba(var(--color-gray-400-rgb), 0.3);
-    --color-error: var(--color-red-400);
-    --color-success: var(--color-teal-300);
-    --color-warning: var(--color-orange-400);
-    --color-info: var(--color-gray-300);
-    --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
-    --color-btn-primary-text: var(--color-slate-900);
-    --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
-    --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
-    --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
-
-    --color-success-rgb: var(--color-teal-300-rgb);
-    --color-error-rgb: var(--color-red-400-rgb);
-    --color-warning-rgb: var(--color-orange-400-rgb);
-    --color-info-rgb: var(--color-gray-300-rgb);
-  }
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text);
-  background-color: var(--color-background);
-  -webkit-font-smoothing: antialiased;
-}
-
-.dashboard-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-teal-700) 100%);
-  color: var(--color-cream-50);
-  padding: var(--space-32) var(--space-24);
-  box-shadow: var(--shadow-lg);
-}
-
-.header-content {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.header h1 {
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-8);
-}
-
-.header-subtitle {
-  font-size: var(--font-size-lg);
-  opacity: 0.95;
-  margin-bottom: var(--space-16);
-}
-
-.header-info {
-  display: flex;
-  gap: var(--space-24);
-  flex-wrap: wrap;
-  font-size: var(--font-size-sm);
-  background: rgba(255, 255, 255, 0.1);
-  padding: var(--space-12) var(--space-16);
-  border-radius: var(--radius-base);
-}
-
-.main-content {
-  flex: 1;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-32) var(--space-24);
-  width: 100%;
-}
-
-.quick-stats {
-  margin-bottom: var(--space-32);
-}
-
-.quick-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-20);
-}
-
-.quick-stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-20);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.quick-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.quick-stat-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin-bottom: var(--space-12);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-}
-
-.quick-stat-icon {
-  font-size: var(--font-size-xl);
-}
-
-.quick-stat-price {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  margin-bottom: var(--space-8);
-}
-
-.quick-stat-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: var(--font-size-sm);
-}
-
-.quick-stat-date {
-  color: var(--color-text-secondary);
-}
-
-.quick-stat-change {
-  font-weight: var(--font-weight-semibold);
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-sm);
-}
-
-.quick-stat-change.up {
-  color: var(--color-error);
-  background: var(--color-bg-4);
-}
-
-.quick-stat-change.down {
-  color: var(--color-success);
-  background: var(--color-bg-3);
-}
-
-.date-range-nav {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-16);
-  margin-bottom: var(--space-32);
-  box-shadow: var(--shadow-sm);
-}
-
-.date-range-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-12);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.date-range-buttons {
-  display: flex;
-  gap: var(--space-8);
-  flex-wrap: wrap;
-}
-
-.date-range-btn {
-  padding: var(--space-12) var(--space-20);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-base);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: var(--font-family-base);
-}
-
-.date-range-btn:hover {
-  border-color: var(--color-primary);
-  background: var(--color-secondary);
-}
-
-.date-range-btn.active {
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
-  border-color: var(--color-primary);
-}
-
-.section {
-  margin-bottom: var(--space-32);
-}
-
-.section-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  margin-bottom: var(--space-20);
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-20);
-}
-
-.stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  box-shadow: var(--shadow-sm);
-}
-
-.stat-card-header {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  margin-bottom: var(--space-16);
-}
-
-.stat-items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--color-card-border-inner);
-}
-
-.stat-item:last-child {
-  border-bottom: none;
-}
-
-.stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.stat-value {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-}
-
-.stat-value.high {
-  color: var(--color-error);
-}
-
-.stat-value.low {
-  color: var(--color-success);
-}
-
-.chart-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-24);
-}
-
-.chart-container {
-  position: relative;
-  height: 400px;
-  margin-top: var(--space-20);
-}
-
-.table-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.table-actions {
-  display: flex;
-  gap: var(--space-12);
-  margin-bottom: var(--space-20);
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: var(--space-12) var(--space-20);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-base);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: var(--font-family-base);
-}
-
-.btn:hover {
-  background: var(--color-secondary);
-  border-color: var(--color-primary);
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
-  border-color: var(--color-primary);
-}
-
-.btn-primary:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-base);
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-}
-
-thead {
-  background: var(--color-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-th {
-  padding: var(--space-12) var(--space-16);
-  text-align: left;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  cursor: pointer;
-  user-select: none;
-}
-
-th:hover {
-  background: var(--color-secondary-hover);
-}
-
-td {
-  padding: var(--space-12) var(--space-16);
-  border-bottom: 1px solid var(--color-card-border-inner);
-  color: var(--color-text);
-}
-
-tbody tr:hover {
-  background: var(--color-secondary);
-}
-
-.insights-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--space-20);
-}
-
-.insight-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-20);
-  box-shadow: var(--shadow-sm);
-}
-
-.insight-card.event {
-  border-left: 4px solid var(--color-warning);
-}
-
-.insight-date {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-  margin-bottom: var(--space-8);
-}
-
-.insight-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  margin-bottom: var(--space-8);
-}
-
-.insight-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-}
-
-.loading {
-  text-align: center;
-  padding: var(--space-32);
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
-}
-
-.error {
-  background: var(--color-bg-4);
-  border: 2px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  padding: var(--space-20);
-  margin: var(--space-24);
-  color: var(--color-error);
-  font-weight: var(--font-weight-semibold);
-}
-
-.footer {
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-card-border);
-  padding: var(--space-24);
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-@media (max-width: 768px) {
-  .header h1 {
-    font-size: var(--font-size-2xl);
-  }
-
-  .date-range-buttons {
-    flex-direction: column;
-  }
-
-  .date-range-btn {
-    width: 100%;
-  }
-
-  .quick-stats-grid,
-  .stats-grid,
-  .insights-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .chart-container {
-    height: 300px;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-in {
-  animation: fadeIn 0.3s ease;
-}
-.price-up {
-  color: #e53935; /* đỏ */
-  background-color: #ffebee;
-}
-
-.price-down {
-  color: #1e88e5; /* xanh */
-  background-color: #e3f2fd;
-}
-
-.change-percent {
-  margin-left: 6px;
-  font-size: 0.9rem;
-}
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>⛽ Gasoline Dashboard Vietnam</title>
+<meta name="description" content="Theo dõi giá xăng dầu Việt Nam, giá dầu thế giới và tính toán chi phí nhiên liệu cho xe ô tô.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060d1f;--surface:#0d1b35;--surface2:#132040;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.12);
+  --text:#e8f0fe;--text2:#8899bb;--text3:#5a6a8a;
+  --teal:#00d4ff;--teal2:#00a8cc;--teal-glow:rgba(0,212,255,.15);
+  --amber:#f59e0b;--amber2:#d97706;--amber-glow:rgba(245,158,11,.15);
+  --green:#10b981;--red:#ef4444;--purple:#8b5cf6;
+  --font:'Inter',sans-serif;--font-h:'Outfit',sans-serif;
+  --r:12px;--r2:8px;--r3:6px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --shadow2:0 2px 12px rgba(0,0,0,.3);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#0d1b35 0%,#0a1628 50%,#060d1f 100%);border-bottom:1px solid var(--border);padding:20px 24px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.hdr-top{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.logo{font-family:var(--font-h);font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--teal),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-meta{margin-left:auto;display:flex;gap:16px;font-size:12px;color:var(--text2)}
+.hdr-meta span{display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* TABS */
+.tabs{max-width:1400px;margin:0 auto;display:flex;gap:4px}
+.tab-btn{padding:12px 24px;border:none;background:none;color:var(--text2);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* MAIN */
+.main{max-width:1400px;margin:0 auto;padding:28px 24px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;box-shadow:var(--shadow2)}
+.card+.card{margin-top:20px}
+.card-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+
+/* STATS GRID */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.stat.amber::before{background:linear-gradient(90deg,var(--amber),var(--amber2))}
+.stat.green::before{background:linear-gradient(90deg,var(--green),#059669)}
+.stat.red::before{background:linear-gradient(90deg,var(--red),#dc2626)}
+.stat.purple::before{background:linear-gradient(90deg,var(--purple),#7c3aed)}
+.stat-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.stat-val{font-family:var(--font-h);font-size:26px;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.badge.up{background:rgba(239,68,68,.15);color:var(--red)}
+.badge.down{background:rgba(16,185,129,.15);color:var(--green)}
+.badge.neutral{background:rgba(139,92,246,.15);color:var(--purple)}
+
+/* RANGE BTNS */
+.range-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.range-btn{padding:8px 16px;border:1px solid var(--border2);border-radius:999px;background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.range-btn:hover{border-color:var(--teal);color:var(--teal)}
+.range-btn.active{background:var(--teal);border-color:var(--teal);color:#000}
+
+/* CHART */
+.chart-wrap{position:relative;height:380px}
+
+/* TABLE */
+.tbl-wrap{overflow:auto;border-radius:var(--r2);max-height:500px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{position:sticky;top:0;background:var(--surface2);z-index:5}
+th{padding:12px 16px;text-align:left;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--border)}
+th:hover{color:var(--teal)}
+td{padding:11px 16px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.02)}
+tr:last-child td{border-bottom:none}
+
+/* EVENTS (Tab 2) */
+.events-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:24px}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;border-left:3px solid var(--amber);transition:all .2s;cursor:pointer}
+.event-card:hover,.event-card.selected{border-left-color:var(--teal);background:var(--surface2)}
+.ev-date{font-size:12px;color:var(--teal);font-weight:700;margin-bottom:6px}
+.ev-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.ev-desc{font-size:13px;color:var(--text2);line-height:1.6}
+.ev-price{font-size:18px;font-weight:800;color:var(--amber);margin-top:8px}
+
+/* CALCULATOR (Tab 3) */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:768px){.calc-grid{grid-template-columns:1fr}}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+select,input[type=number]{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s;appearance:none}
+select:focus,input[type=number]:focus{border-color:var(--teal)}
+.fuel-type-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fuel-radio{display:none}
+.fuel-label{display:block;padding:10px;border:1px solid var(--border2);border-radius:var(--r2);text-align:center;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2)}
+.fuel-radio:checked+.fuel-label{border-color:var(--teal);color:var(--teal);background:var(--teal-glow)}
+.drive-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.drive-radio{display:none}
+.drive-label{display:block;padding:10px;border:1px solid var(--border2);border-radius:var(--r2);text-align:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2)}
+.drive-radio:checked+.drive-label{border-color:var(--amber);color:var(--amber);background:var(--amber-glow)}
+.result-box{background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--teal);border-radius:var(--r);padding:24px;margin-top:0}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.result-row:last-child{border-bottom:none}
+.result-lbl{font-size:13px;color:var(--text2)}
+.result-val{font-size:16px;font-weight:700;color:var(--teal)}
+.result-val.big{font-size:22px;color:var(--amber)}
+.cmp-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:var(--r2);color:#000;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;transition:opacity .2s}
+.cmp-btn:hover{opacity:.85}
+.compare-section{margin-top:24px}
+
+/* LOADING / ERROR */
+.loading{text-align:center;padding:60px;color:var(--text2);font-size:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:var(--r);padding:20px;color:var(--red);font-weight:600}
+
+/* SECTION SEP */
+.section{margin-bottom:28px}
+.section-hdr{font-family:var(--font-h);font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;color:var(--text3);font-size:12px;margin-top:40px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .main{padding:20px 16px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .tab-btn{padding:10px 14px;font-size:13px}
+  .chart-wrap{height:280px}
+}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <header class="header">
-            <div class="header-content">
-                <h1>🛢️ Gasoline Price Tracker</h1>
-                <div class="header-subtitle">Real-time prices and historical trends (2019-2025)</div>
-                <div class="header-info">
-                    <div>📅 <strong>Last Update:</strong> <span id="lastUpdate">28/11/2025 17:00</span></div>
-                    <div>🔄 <strong>Update Frequency:</strong> Every 7 days at 17:00</div>
-                    <div>📊 <strong>Total Records:</strong> <span id="totalRecords">Loading...</span></div>
-                </div>
-            </div>
-        </header>
-
-        <main class="main-content">
-            <div id="loadingMessage" class="loading">⏳ Loading data from CSV...</div>
-            <div id="errorMessage" class="error" style="display: none;"></div>
-            <div id="dashboardContent" style="display: none;">
-                <!-- Quick Stats Cards -->
-                <section class="quick-stats">
-                    <div class="quick-stats-grid" id="quickStatsGrid"></div>
-                </section>
-
-                <!-- Date Range Selector -->
-                <section class="date-range-nav">
-                    <div class="date-range-label">📊 Select Date Range</div>
-                    <div class="date-range-buttons">
-                        <button class="date-range-btn" onclick="selectRange('1M')" data-range="1M">📊 1M</button>
-                        <button class="date-range-btn" onclick="selectRange('3M')" data-range="3M">📊 3M</button>
-                        <button class="date-range-btn" onclick="selectRange('6M')" data-range="6M">📊 6M</button>
-                        <button class="date-range-btn" onclick="selectRange('1Y')" data-range="1Y">📊 1Y</button>
-                        <button class="date-range-btn" onclick="selectRange('3Y')" data-range="3Y">📊 3Y</button>
-                        <button class="date-range-btn active" onclick="selectRange('ALL')" data-range="ALL">📊 ALL</button>
-                    </div>
-                </section>
-
-                <!-- Statistics Panel -->
-                <section class="section">
-                    <h2 class="section-title">📊 Statistics for Selected Range</h2>
-                    <div class="stats-grid" id="statsGrid"></div>
-                </section>
-
-                <!-- Main Chart -->
-                <section class="section">
-                    <div class="chart-card">
-                        <h2 class="section-title">📈 Price Trends</h2>
-                        <div class="chart-container">
-                            <canvas id="priceChart"></canvas>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Market Insights -->
-                <section class="section">
-                    <h2 class="section-title">💡 Market Insights &amp; Key Events</h2>
-                    <div class="insights-grid">
-                        <div class="insight-card event">
-                            <div class="insight-date">📅 20/04/2020</div>
-                            <div class="insight-title">COVID-19 Impact</div>
-                            <div class="insight-desc">Oil prices crashed during pandemic lockdowns. Global demand dropped significantly affecting all fuel products.</div>
-                        </div>
-                        <div class="insight-card event">
-                            <div class="insight-date">📅 30/06/2022</div>
-                            <div class="insight-title">Energy Crisis</div>
-                            <div class="insight-desc">Prices peaked during global energy crisis. Supply chain disruptions and geopolitical tensions drove prices to historic highs.</div>
-                        </div>
-                        <div class="insight-card event">
-                            <div class="insight-date">📅 Q1 2026</div>
-                            <div class="insight-title">US-Iran Middle East Conflict</div>
-                            <div class="insight-desc">Oil prices surged due to escalating military tensions between the US and Iran in the Middle East. Supply disruption fears in the Strait of Hormuz pushed global crude and fuel prices sharply higher.</div>
-                        </div>
-                        <div class="insight-card">
-                            <div class="insight-date">📅 15/03/2026</div>
-                            <div class="insight-title">Current Market</div>
-                            <div class="insight-desc">Prices elevated amid Middle East geopolitical uncertainty. The US-Iran conflict continues to drive volatility, with supply risks keeping fuel costs above recent-year averages.</div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Data Table -->
-                <section class="section">
-                    <div class="table-card">
-                        <h2 class="section-title">📋 Historical Price Data</h2>
-                        <div class="table-actions">
-                            <button class="btn btn-primary" onclick="exportCSV()">📥 Export CSV</button>
-                            <button class="btn" onclick="exportJSON()">📥 Export JSON</button>
-                        </div>
-                        <div class="table-wrapper">
-                            <table id="dataTable">
-                                <thead>
-                                    <tr>
-                                        <th onclick="sortTable(0)">Date ⬍</th>
-                                        <th onclick="sortTable(1)">Product ⬍</th>
-                                        <th onclick="sortTable(2)">Price (VNĐ) ⬍</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-
-        <footer class="footer">
-            <div>© 2026 Fuel Price Tracker | Data updated every 7 days at 15:00 | Historical data from 2019-2026</div>
-        </footer>
+<header class="hdr">
+  <div class="hdr-top">
+    <div class="logo">⛽ Gasoline Dashboard</div>
+    <div class="hdr-meta">
+      <span><span class="dot"></span> Live</span>
+      <span id="hdr-date">--/--/----</span>
     </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('vn')" id="tab-vn">🇻🇳 Giá Xăng Việt Nam</button>
+    <button class="tab-btn" onclick="switchTab('world')" id="tab-world">🌍 Giá Dầu Thế Giới</button>
+    <button class="tab-btn" onclick="switchTab('calc')" id="tab-calc">🚗 Tính Chi Phí Xăng</button>
+  </nav>
+</header>
 
-    <script>
-        let allData = [];
-        let filteredData = [];
-        let currentRange = 'ALL';
-        let priceChart = null;
+<main class="main">
+  <!-- TAB 1: Vietnam -->
+  <div class="tab-panel active" id="panel-vn">
+    <div id="vn-loading" class="loading"><div class="spinner"></div>Đang tải dữ liệu...</div>
+    <div id="vn-err" class="err" style="display:none"></div>
+    <div id="vn-content" style="display:none">
+      <div class="stats-row" id="vn-stats"></div>
+      <div class="section">
+        <div class="range-bar" id="vn-range">
+          <button class="range-btn" onclick="vnRange('1M')">1T</button>
+          <button class="range-btn" onclick="vnRange('3M')">3T</button>
+          <button class="range-btn" onclick="vnRange('6M')">6T</button>
+          <button class="range-btn" onclick="vnRange('1Y')">1N</button>
+          <button class="range-btn" onclick="vnRange('3Y')">3N</button>
+          <button class="range-btn active" onclick="vnRange('ALL')">Tất cả</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Biểu Đồ Giá Xăng Dầu (PVOIL)</div>
+          <div class="chart-wrap"><canvas id="vnChart"></canvas></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-hdr">💡 Sự Kiện Thị Trường</div>
+        <div class="events-grid">
+          <div class="event-card"><div class="ev-date">📅 04/2020</div><div class="ev-title">COVID-19 – Giá lao dốc</div><div class="ev-desc">Dịch bệnh khiến nhu cầu nhiên liệu toàn cầu sụp đổ. Xăng RON95 xuống còn 11,630 VNĐ/lít.</div></div>
+          <div class="event-card"><div class="ev-date">📅 06/2022</div><div class="ev-title">Khủng hoảng Năng lượng – Đỉnh cao</div><div class="ev-desc">Xung đột Nga-Ukraine đẩy giá dầu thế giới lên đỉnh. Xăng RON95 chạm 32,870 VNĐ/lít.</div></div>
+          <div class="event-card"><div class="ev-date">📅 Q1 2026</div><div class="ev-title">Căng thẳng Mỹ-Iran</div><div class="ev-desc">Leo thang quân sự tại Trung Đông làm dấy lên lo ngại gián đoạn nguồn cung qua eo biển Hormuz.</div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <span>📋 Lịch Sử Giá Xăng Dầu</span>
+            <div style="display:flex;gap:8px">
+              <button class="range-btn" onclick="exportVnCSV()" title="Xuất CSV">⬇️ CSV</button>
+              <button class="range-btn" onclick="exportVnJSON()" title="Xuất JSON">⬇️ JSON</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="range-btn active" onclick="vnFilter('all')" id="filter-all">Tất cả</button>
+            <button class="range-btn" onclick="vnFilter('ron95')" id="filter-ron95">RON 95</button>
+            <button class="range-btn" onclick="vnFilter('e5')" id="filter-e5">E5 RON 92</button>
+            <button class="range-btn" onclick="vnFilter('do')" id="filter-do">Dầu DO</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th onclick="vnSort(0)">Ngày ↕</th><th onclick="vnSort(1)">Mặt Hàng ↕</th><th onclick="vnSort(2)">Giá (VNĐ) ↕</th><th>Thay Đổi</th></tr></thead>
+              <tbody id="vn-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        const productMap = {
-            'Xăng RON 95-III': { code: 'ron95', color: '#EF4444', icon: '⛽' },
-            'Xăng E5 RON 92-II': { code: 'e5', color: '#3B82F6', icon: '⛽' },
-            'Dầu DO 0,05S-II': { code: 'do', color: '#10B981', icon: '🛢️' },
-            'Dầu KO': { code: 'ko', color: '#F59E0B', icon: '🛢️' },
-            'Dầu DO 0,001S-V':{ code: 'dov',  color: '#f59e0b', icon: '🛢️' },
-            'Xăng E10 RON 95-III' :{code: 'e10ron95',  color: '#17becf', icon: '⛽'}
-        };
+  <!-- TAB 2: World Oil -->
+  <div class="tab-panel" id="panel-world">
+    <div class="stats-row" id="world-stats"></div>
+    <div class="section">
+      <div class="range-bar">
+        <button class="range-btn" onclick="worldRange(1)">1N</button>
+        <button class="range-btn" onclick="worldRange(3)">3N</button>
+        <button class="range-btn" onclick="worldRange(5)">5N</button>
+        <button class="range-btn active" onclick="worldRange(0)">Tất cả</button>
+      </div>
+      <div class="card">
+        <div class="card-title">🛢️ Giá Dầu Thô Brent (USD/thùng)</div>
+        <div class="chart-wrap"><canvas id="worldChart"></canvas></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr">📌 Sự Kiện Giá Dầu Lịch Sử</div>
+      <div class="events-grid" id="world-events"></div>
+    </div>
+  </div>
 
-        // Load CSV data
-        function loadData() {
-            Papa.parse('pvoil_gasoline_prices_full.csv', {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    if (results.data && results.data.length > 0) {
-                        allData = results.data.map(row => ({
-                            date: row['Ngày'] || row['Date'] || row['date'],
-                            product: row['Mặt hàng'] || row['Product'] || row['product'],
-                            price: parseFloat(row['Giá (VND)'] || row['Price'] || row['price'])
-                        })).filter(d => d.date && d.product && !isNaN(d.price));
+  <!-- TAB 3: Calculator -->
+  <div class="tab-panel" id="panel-calc">
+    <div class="calc-grid">
+      <div>
+        <div class="card">
+          <div class="card-title">🚗 Chọn Xe & Thông Số</div>
+          <div class="form-group">
+            <label>Hãng xe</label>
+            <select id="brand-sel" onchange="onBrandChange()"><option value="">-- Chọn hãng --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Dòng xe</label>
+            <select id="model-sel" onchange="calcFuel()"><option value="">-- Chọn dòng xe --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Kiểu lái</label>
+            <div class="drive-row">
+              <input type="radio" name="drive" id="d-city" class="drive-radio" value="city" checked onchange="calcFuel()">
+              <label for="d-city" class="drive-label">🏙️ Nội thành</label>
+              <input type="radio" name="drive" id="d-mix" class="drive-radio" value="mix" onchange="calcFuel()">
+              <label for="d-mix" class="drive-label">🔀 Hỗn hợp</label>
+              <input type="radio" name="drive" id="d-hwy" class="drive-radio" value="hwy" onchange="calcFuel()">
+              <label for="d-hwy" class="drive-label">🛣️ Cao tốc</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Quãng đường / ngày (km)</label>
+            <input type="number" id="km-day" value="50" min="1" max="1000" oninput="calcFuel()">
+          </div>
+          <div class="form-group">
+            <label>Loại nhiên liệu</label>
+            <div class="fuel-type-row">
+              <input type="radio" name="fuel" id="f-ron95" class="fuel-radio" value="ron95" checked onchange="calcFuel()">
+              <label for="f-ron95" class="fuel-label">⛽ RON 95</label>
+              <input type="radio" name="fuel" id="f-e5" class="fuel-radio" value="e5" onchange="calcFuel()">
+              <label for="f-e5" class="fuel-label">🌿 E5 RON 92</label>
+            </div>
+          </div>
+          <button class="cmp-btn" onclick="addToCompare()">➕ Thêm vào so sánh</button>
+        </div>
+      </div>
+      <div>
+        <div class="result-box" id="calc-result">
+          <div style="text-align:center;color:var(--text2);padding:40px 0">Chọn xe để xem kết quả tính toán</div>
+        </div>
+        <div class="compare-section" id="compare-section" style="display:none">
+          <div class="card">
+            <div class="card-title">📊 So Sánh Các Xe</div>
+            <div class="tbl-wrap"><table><thead id="cmp-head"></thead><tbody id="cmp-body"></tbody></table></div>
+            <button class="range-btn" onclick="clearCompare()" style="margin-top:12px">🗑️ Xóa so sánh</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
 
-                        if (allData.length > 0) {
+<footer>
+  © 2026 Gasoline Dashboard · Dữ liệu PVOIL cập nhật mỗi 7 ngày · Giá dầu thế giới: nguồn EIA / eia.gov
+</footer>
 
-                            // Sort data by date to find latest update
-                            const sorted = [...allData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
-                            const latestDate = sorted[sorted.length - 1].date;
+<script>
+// ===== TAB SWITCHING =====
+function switchTab(t){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
 
-                            // Use current time or fixed time (17:00)
-                            const now = new Date();
-                            const hours = String(now.getHours()).padStart(2,'0');
-                            const minutes = String(now.getMinutes()).padStart(2,'0');
+// ===== DATE =====
+(function(){
+  const d=new Date();
+  document.getElementById('hdr-date').textContent=d.toLocaleDateString('vi-VN');
+})();
 
-                            const formattedLastUpdate = `${formatDate(latestDate)} ${hours}:${minutes}`;
+</script>
+<script>
+// ===== TAB 1: VIETNAM PRICES =====
+let allData=[], filteredByRange=[], currentFilter='all', currentRange='ALL', vnChartInst=null, vnSortCol=0, vnSortAsc=false;
+const PRODUCTS={
+  'Xăng RON 95-III':{key:'ron95',color:'#00d4ff',label:'RON 95-III'},
+  'Xăng E5 RON 92-II':{key:'e5',color:'#f59e0b',label:'E5 RON 92'},
+  'Dầu DO 0,05S-II':{key:'do',color:'#10b981',label:'Dầu DO 0.05S'},
+  'Dầu DO 0,001S-V':{key:'dov',color:'#8b5cf6',label:'Dầu DO 0.001S'},
+  'Xăng E10 RON 95-III':{key:'e10',color:'#ec4899',label:'E10 RON 95'},
+  'Dầu KO':{key:'ko',color:'#f97316',label:'Dầu KO'},
+};
+const VN_EVENTS=[
+  {date:'2020-04-13',label:'COVID'},
+  {date:'2022-06-21',label:'Đỉnh 2022'},
+  {date:'2026-01-15',label:'Mỹ-Iran'},
+];
 
-                            // Update UI
-                            document.getElementById('lastUpdate').textContent = formattedLastUpdate;
+function parseDMY(s){const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d);}
+function fmt(d){return d.toLocaleDateString('vi-VN');}
+function fmtPrice(n){return n.toLocaleString('vi-VN');}
 
-                            document.getElementById('totalRecords').textContent = `${allData.length} entries`;
-                            document.getElementById('loadingMessage').style.display = 'none';
-                            document.getElementById('dashboardContent').style.display = 'block';
+Papa.parse('pvoil_gasoline_prices_full.csv',{
+  download:true,header:true,skipEmptyLines:true,
+  complete:function(res){
+    allData=res.data.map(r=>({
+      date:r['Ngày']||r['Date'],
+      product:r['Mặt hàng']||r['Product'],
+      price:parseFloat(r['Giá (VND)']||r['Price'])||0
+    })).filter(r=>r.date&&r.product&&r.price>0);
+    if(!allData.length){showVnErr('Không tải được dữ liệu CSV');return;}
+    document.getElementById('vn-loading').style.display='none';
+    document.getElementById('vn-content').style.display='block';
+    vnRange('ALL');
+  },
+  error:()=>showVnErr('Lỗi tải file CSV')
+});
 
-                            selectRange('ALL');
-                        } else {
-                            showError('No valid data found in CSV file');
-                        }
-                    } else {
-                        showError('Failed to parse CSV data');
-                    }
-                },
-                error: function(error) {
-                    showError('Error loading CSV: ' + error.message);
-                }
-            });
+function showVnErr(m){
+  document.getElementById('vn-loading').style.display='none';
+  const e=document.getElementById('vn-err');e.style.display='block';e.textContent=m;
+}
+
+function vnRange(r){
+  currentRange=r;
+  document.querySelectorAll('#vn-range .range-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===({
+      '1M':'1T','3M':'3T','6M':'6T','1Y':'1N','3Y':'3N','ALL':'Tất cả'
+    }[r]));
+  });
+  const now=new Date(), cutoff=new Date(now);
+  if(r==='1M') cutoff.setMonth(cutoff.getMonth()-1);
+  else if(r==='3M') cutoff.setMonth(cutoff.getMonth()-3);
+  else if(r==='6M') cutoff.setMonth(cutoff.getMonth()-6);
+  else if(r==='1Y') cutoff.setFullYear(cutoff.getFullYear()-1);
+  else if(r==='3Y') cutoff.setFullYear(cutoff.getFullYear()-3);
+  else cutoff.setFullYear(2000);
+  filteredByRange=allData.filter(d=>parseDMY(d.date)>=cutoff);
+  renderVnStats();renderVnChart();renderVnTable();
+}
+
+function vnFilter(f){
+  currentFilter=f;
+  ['all','ron95','e5','do'].forEach(x=>{
+    const b=document.getElementById('filter-'+x);
+    if(b) b.classList.toggle('active',x===f);
+  });
+  renderVnTable();
+}
+
+function vnSort(col){
+  if(vnSortCol===col) vnSortAsc=!vnSortAsc;
+  else{vnSortCol=col;vnSortAsc=false;}
+  renderVnTable();
+}
+
+function renderVnStats(){
+  const products=[
+    'Xăng RON 95-III',
+    'Xăng E10 RON 95-III',
+    'Xăng E5 RON 92-II',
+    'Dầu DO 0,05S-II',
+    'Dầu DO 0,001S-V',
+    'Dầu KO',
+  ];
+  const colors=['teal','green','amber','green','purple','red'];
+  const icons=['⛽','🌿','🌿','🛢️','🛢️','💡'];
+  const sorted=[...allData].sort((a,b)=>parseDMY(a.date)-parseDMY(b.date));
+  const latest=sorted[sorted.length-1]?.date;
+  let html='';
+  products.forEach((p,i)=>{
+    const rows=sorted.filter(r=>r.product===p);
+    if(!rows.length) return;
+    const cur=rows[rows.length-1];
+    const prev=rows[rows.length-2];
+    const diff=prev?cur.price-prev.price:0;
+    const pct=prev?(diff/prev.price*100):0;
+    const info=PRODUCTS[p];
+    const bClass=diff>0?'up':diff<0?'down':'neutral';
+    const bSign=diff>0?'▲':diff<0?'▼':'—';
+    html+=`<div class="stat ${colors[i]}">
+      <div class="stat-label">${icons[i]} ${info?.label||p}</div>
+      <div class="stat-val">${fmtPrice(cur.price)}<span style="font-size:13px;font-weight:500;color:var(--text2)"> đ</span></div>
+      <div class="stat-sub" style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${bClass}">${bSign} ${Math.abs(pct).toFixed(1)}%</span>
+        <span>${fmt(parseDMY(cur.date))}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('vn-stats').innerHTML=html;
+}
+
+function renderVnChart(){
+  const dateSet=new Set();
+  filteredByRange.forEach(r=>dateSet.add(r.date));
+  const dates=[...dateSet].sort((a,b)=>parseDMY(a)-parseDMY(b));
+  const mainProds=['Xăng RON 95-III','Xăng E10 RON 95-III','Xăng E5 RON 92-II','Dầu DO 0,05S-II','Dầu DO 0,001S-V','Dầu KO'];
+  const datasets=mainProds.map(p=>{
+    const info=PRODUCTS[p];
+    const priceMap={};
+    filteredByRange.filter(r=>r.product===p).forEach(r=>priceMap[r.date]=r.price);
+    return{
+      label:info.label,borderColor:info.color,backgroundColor:info.color+'22',
+      data:dates.map(d=>priceMap[d]??null),
+      borderWidth:2,pointRadius:2,pointHoverRadius:5,
+      fill:false,tension:0.3,spanGaps:true
+    };
+  });
+  const annotations={};
+  VN_EVENTS.forEach((ev,i)=>{
+    const evDate=new Date(ev.date);
+    const closest=dates.reduce((best,d)=>{
+      const diff=Math.abs(parseDMY(d)-evDate);
+      return diff<Math.abs(parseDMY(best)-evDate)?d:best;
+    },dates[0]);
+    if(closest){
+      annotations['ev'+i]={
+        type:'line',xMin:closest,xMax:closest,
+        borderColor:'rgba(245,158,11,0.7)',borderWidth:1,borderDash:[4,4],
+        label:{content:ev.label,display:true,position:'start',
+          color:'#f59e0b',font:{size:10,weight:'bold'},
+          backgroundColor:'rgba(245,158,11,0.1)',padding:4}
+      };
+    }
+  });
+  const ctx=document.getElementById('vnChart').getContext('2d');
+  if(vnChartInst) vnChartInst.destroy();
+  vnChartInst=new Chart(ctx,{
+    type:'line',data:{labels:dates,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:'#8899bb',font:{size:12}}},
+        annotation:{annotations},
+        tooltip:{
+          backgroundColor:'#0d1b35',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+          titleColor:'#e8f0fe',bodyColor:'#8899bb',
+          callbacks:{
+            title:([{label}])=>{try{return fmt(parseDMY(label));}catch{return label;}},
+            label:({dataset,raw})=>raw?` ${dataset.label}: ${fmtPrice(raw)} đ`:null
+          }
         }
+      },
+      scales:{
+        x:{ticks:{color:'#5a6a8a',maxTicksLimit:10,maxRotation:0},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#5a6a8a',callback:v=>fmtPrice(v)},grid:{color:'rgba(255,255,255,.04)'}}
+      }
+    }
+  });
+}
 
-        function showError(message) {
-            document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('errorMessage').textContent = '❌ ' + message;
-            document.getElementById('errorMessage').style.display = 'block';
-        }
-
-        // Format functions
-        function formatVND(number) {
-            return new Intl.NumberFormat('vi-VN').format(Math.round(number));
-        }
-
-        function parseDate(dateStr) {
-            if (!dateStr) return null;
-            const parts = dateStr.split('/');
-            if (parts.length === 3) {
-                return new Date(parts[2], parts[1] - 1, parts[0]);
-            }
-            return new Date(dateStr);
-        }
-
-        function formatDate(dateStr) {
-            const date = parseDate(dateStr);
-            if (!date || isNaN(date)) return dateStr;
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-
-        // Filter data by range
-        function filterDataByRange(range) {
-            if (allData.length === 0) return [];
-            
-            const sortedData = [...allData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
-            const lastDate = parseDate(sortedData[sortedData.length - 1].date);
-            let startDate;
-
-            switch(range) {
-                case '1M':
-                    startDate = new Date(lastDate);
-                    startDate.setMonth(startDate.getMonth() - 1);
-                    break;
-                case '3M':
-                    startDate = new Date(lastDate);
-                    startDate.setMonth(startDate.getMonth() - 3);
-                    break;
-                case '6M':
-                    startDate = new Date(lastDate);
-                    startDate.setMonth(startDate.getMonth() - 6);
-                    break;
-                case '1Y':
-                    startDate = new Date(lastDate);
-                    startDate.setFullYear(startDate.getFullYear() - 1);
-                    break;
-                case '3Y':
-                    startDate = new Date(lastDate);
-                    startDate.setFullYear(startDate.getFullYear() - 3);
-                    break;
-                case 'ALL':
-                default:
-                    return sortedData;
-            }
-
-            return sortedData.filter(d => parseDate(d.date) >= startDate);
-        }
-
-        // Select range
-        function selectRange(range) {
-            currentRange = range;
-            filteredData = filterDataByRange(range);
-
-            document.querySelectorAll('.date-range-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.getAttribute('data-range') === range) {
-                    btn.classList.add('active');
-                }
-            });
-
-            updateDashboard();
-        }
-
-        // Update dashboard
-        function updateDashboard() {
-            updateQuickStats();
-            updateStatistics();
-            updateChart();
-            updateTable();
-        }
-
-        // Update quick stats
-        function updateQuickStats() {
-            const mainProducts = ['Xăng RON 95-III', 'Xăng E5 RON 92-II', 'Dầu DO 0,05S-II', 'Dầu KO','Dầu DO 0,001S-V','Xăng E10 RON 95-III'];
-            const quickStatsGrid = document.getElementById('quickStatsGrid');
-            
-            quickStatsGrid.innerHTML = mainProducts.map(productName => {
-                const productData = filteredData.filter(d => d.product === productName);
-                if (productData.length === 0) return '';
-                
-                const sortedData = productData.sort((a, b) => parseDate(b.date) - parseDate(a.date));
-                const latestPrice = sortedData[0].price;
-                const latestDate = sortedData[0].date;
-                const prevPrice = sortedData.length > 1 ? sortedData[1].price : latestPrice;
-                const change = latestPrice - prevPrice;
-const relativeChange = calcRelativeChange(latestPrice, change);
-     const changeClass = change > 0 ? 'up' : change < 0 ? 'down' : '';
-     const changeIcon = change > 0 ? '↑' : change < 0 ? '↓' : '→';
-     const changeText = `${changeIcon} ${formatVND(Math.abs(change))} VNĐ`;
-     const relativeText = `${changeIcon} ${Math.abs(relativeChange).toFixed(2)}%`;
-     const productInfo = productMap[productName];
-     
-     return `
-     <div class="quick-stat-card animate-in">
-     <div class="quick-stat-header">
-     <span class="quick-stat-icon">${productInfo.icon}</span>
-     <span>${productName}</span>
-     </div>
-     <div class="quick-stat-price">${formatVND(latestPrice)} VNĐ/lít</div>
-     <div class="quick-stat-info">
-     <span class="quick-stat-date">${formatDate(latestDate)}</span>
-     <div style="display: flex; gap: 8px;">
-     <span class="quick-stat-change ${changeClass}">${changeText}</span>
-     <span class="quick-stat-change ${changeClass}">${relativeText}</span>
-     </div>
-     </div>
-     </div>`}).join('');
-   }
-
-        // Update statistics
-        function updateStatistics() {
-            const statsGrid = document.getElementById('statsGrid');
-            const products = Object.keys(productMap);
-            
-            statsGrid.innerHTML = products.map(productName => {
-                const productData = filteredData.filter(d => d.product === productName);
-                if (productData.length === 0) return '';
-                
-                const prices = productData.map(d => d.price);
-                const high = Math.max(...prices);
-                const low = Math.min(...prices);
-                const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-                
-                const highRecord = productData.find(d => d.price === high);
-                const lowRecord = productData.find(d => d.price === low);
-                
-                const sortedData = productData.sort((a, b) => parseDate(a.date) - parseDate(b.date));
-                const change = sortedData[sortedData.length - 1].price - sortedData[0].price;
-                const changePercent = ((change / sortedData[0].price) * 100).toFixed(2);
-                
-                return `
-                    <div class="stat-card animate-in">
-                        <div class="stat-card-header">${productName}</div>
-                        <div class="stat-items">
-                            <div class="stat-item">
-                                <span class="stat-label">Highest Price</span>
-                                <span class="stat-value high">${formatVND(high)} VNĐ</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Date</span>
-                                <span class="stat-value">${formatDate(highRecord.date)}</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Lowest Price</span>
-                                <span class="stat-value low">${formatVND(low)} VNĐ</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Date</span>
-                                <span class="stat-value">${formatDate(lowRecord.date)}</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Average Price</span>
-                                <span class="stat-value">${formatVND(avg)} VNĐ</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Period Change</span>
-                                <span class="stat-value ${change >= 0 ? 'high' : 'low'}">${change >= 0 ? '+' : ''}${formatVND(change)} VNĐ (${changePercent}%)</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-        // New def
-        function calcRelativeChange(currentPrice, absChange) {
-            const prevPrice = currentPrice - absChange;
-            if (!prevPrice || prevPrice === 0) return 0;
-            return (absChange / prevPrice) * 100;
+function renderVnTable(){
+  let rows=[...filteredByRange];
+  if(currentFilter!=='all'){
+    const keyMap={ron95:'Xăng RON 95-III',e5:'Xăng E5 RON 92-II',do:'Dầu DO 0,05S-II'};
+    const target=keyMap[currentFilter];
+    rows=rows.filter(r=>r.product===target);
   }
+  // Build map for prev price lookup
+  const sorted=[...allData].sort((a,b)=>parseDMY(a.date)-parseDMY(b.date));
+  const prevMap={};
+  sorted.forEach(r=>{
+    const key=r.product;
+    if(!prevMap[key]) prevMap[key]={prev:null,cur:null};
+    prevMap[key].prev=prevMap[key].cur;
+    prevMap[key].cur=r.price;
+  });
+  // Sort
+  rows.sort((a,b)=>{
+    let va=vnSortCol===0?parseDMY(a.date):vnSortCol===1?a.product:a.price;
+    let vb=vnSortCol===0?parseDMY(b.date):vnSortCol===1?b.product:b.price;
+    if(va<vb) return vnSortAsc?-1:1;
+    if(va>vb) return vnSortAsc?1:-1;
+    return 0;
+  });
+  // Compute per-row change
+  const rowPricePrev={};
+  const sortedAll=[...allData].sort((a,b)=>parseDMY(a.date)-parseDMY(b.date));
+  sortedAll.forEach(r=>{
+    const k=r.product+'|'+r.date;
+    rowPricePrev[k]=rowPricePrev['last_'+r.product]||null;
+    rowPricePrev['last_'+r.product]=r.price;
+  });
+  const top200=rows.slice(0,200);
+  document.getElementById('vn-tbody').innerHTML=top200.map(r=>{
+    const prev=rowPricePrev[r.product+'|'+r.date];
+    const diff=prev!==null?r.price-prev:null;
+    const sign=diff===null?'—':diff>0?`<span style="color:var(--red)">▲${fmtPrice(diff)}</span>`:diff<0?`<span style="color:var(--green)">▼${fmtPrice(Math.abs(diff))}</span>`:'—';
+    const info=PRODUCTS[r.product];
+    return`<tr><td>${fmt(parseDMY(r.date))}</td><td><span style="color:${info?.color||'#ccc'}">${info?.label||r.product}</span></td><td style="font-weight:700">${fmtPrice(r.price)} đ</td><td>${sign}</td></tr>`;
+  }).join('');
+}
+</script>
+<script>
+// ===== TAB 2: WORLD OIL PRICE (BRENT) =====
+const BRENT=[
+  ['2018-01',69.1],['2018-02',65.3],['2018-03',66.8],['2018-04',72.1],['2018-05',76.9],['2018-06',74.4],
+  ['2018-07',74.2],['2018-08',72.5],['2018-09',78.9],['2018-10',80.5],['2018-11',65.0],['2018-12',55.1],
+  ['2019-01',59.2],['2019-02',64.4],['2019-03',67.2],['2019-04',71.2],['2019-05',69.8],['2019-06',64.4],
+  ['2019-07',63.9],['2019-08',59.2],['2019-09',62.2],['2019-10',59.7],['2019-11',62.5],['2019-12',66.0],
+  ['2020-01',63.6],['2020-02',55.7],['2020-03',33.7],['2020-04',18.4],['2020-05',30.0],['2020-06',40.9],
+  ['2020-07',43.4],['2020-08',44.8],['2020-09',41.0],['2020-10',40.2],['2020-11',43.6],['2020-12',50.6],
+  ['2021-01',55.1],['2021-02',61.3],['2021-03',64.6],['2021-04',65.2],['2021-05',68.5],['2021-06',74.5],
+  ['2021-07',74.6],['2021-08',70.6],['2021-09',74.8],['2021-10',83.3],['2021-11',79.9],['2021-12',73.7],
+  ['2022-01',85.2],['2022-02',97.0],['2022-03',117.3],['2022-04',108.1],['2022-05',113.0],['2022-06',122.7],
+  ['2022-07',105.8],['2022-08',99.7],['2022-09',91.6],['2022-10',95.0],['2022-11',88.8],['2022-12',77.4],
+  ['2023-01',83.4],['2023-02',83.5],['2023-03',78.3],['2023-04',83.5],['2023-05',75.5],['2023-06',74.5],
+  ['2023-07',81.0],['2023-08',85.0],['2023-09',93.4],['2023-10',91.1],['2023-11',83.6],['2023-12',77.6],
+  ['2024-01',79.7],['2024-02',82.0],['2024-03',87.0],['2024-04',88.9],['2024-05',84.1],['2024-06',84.3],
+  ['2024-07',84.9],['2024-08',79.7],['2024-09',73.8],['2024-10',74.4],['2024-11',72.7],['2024-12',73.7],
+  ['2025-01',79.9],['2025-02',77.2],['2025-03',75.1],['2025-04',72.4],['2025-05',65.2],['2025-06',68.3],
+  ['2025-07',71.5],['2025-08',74.2],['2025-09',72.8],['2025-10',75.1],['2025-11',76.4],['2025-12',74.9],
+  ['2026-01',82.3],['2026-02',86.1],['2026-03',84.7]
+];
 
-        // Update chart
-        function updateChart() {
-            const ctx = document.getElementById('priceChart').getContext('2d');
-            if (priceChart) priceChart.destroy();
+const WORLD_EVENTS=[
+  {ym:'2020-04',title:'COVID-19 – Giá sụp đổ',desc:'Phong toả toàn cầu khiến nhu cầu dầu sụp đổ. Giá Brent xuống dưới 20 USD/thùng – mức thấp nhất 20 năm.',price:'$18.4',color:'#ef4444'},
+  {ym:'2022-02',title:'Nga xâm lược Ukraine',desc:'Nga tấn công Ukraine ngày 24/2/2022, làm gián đoạn nguồn cung dầu khí từ Nga – nước xuất khẩu dầu lớn nhất thế giới.',price:'$97.0',color:'#f97316'},
+  {ym:'2022-06',title:'Đỉnh năng lượng 2022',desc:'Giá Brent đạt đỉnh $122.7/thùng – mức cao nhất kể từ năm 2008. OPEC+ hạn chế sản lượng, Nga bị cấm vận.',price:'$122.7',color:'#f59e0b'},
+  {ym:'2023-10',title:'Xung đột Israel-Hamas',desc:'Cuộc xung đột ở Gaza bùng nổ làm giá dầu tăng do lo ngại leo thang xung đột ở Trung Đông.',price:'$91.1',color:'#8b5cf6'},
+  {ym:'2026-01',title:'Căng thẳng Mỹ-Iran 2026',desc:'Leo thang quân sự Mỹ-Iran tại Trung Đông. Lo ngại eo biển Hormuz bị phong tỏa đẩy giá Brent lên trên $80.',price:'$82.3',color:'#00d4ff'},
+];
 
-            const groupedData = {};
-            filteredData.forEach(d => {
-                if (!groupedData[d.date]) groupedData[d.date] = {};
-                groupedData[d.date][d.product] = d.price;
-            });
+let worldChartInst=null, worldRangeYears=0;
 
-            const sortedDates = Object.keys(groupedData).sort((a, b) => parseDate(a) - parseDate(b));
-            const labels = sortedDates.map(d => formatDate(d));
+function initWorldTab(){
+  renderWorldStats();
+  renderWorldChart(0);
+  renderWorldEvents();
+}
 
-            const datasets = Object.keys(productMap).map(productName => {
-                const productInfo = productMap[productName];
-                const data = sortedDates.map(date => groupedData[date][productName] || null);
-                
-                return {
-                    label: productName,
-                    data: data,
-                    borderColor: productInfo.color,
-                    backgroundColor: productInfo.color + '20',
-                    tension: 0.4,
-                    fill: false,
-                    pointRadius: 3,
-                    pointHoverRadius: 5
-                };
-            });
+function worldRange(years){
+  worldRangeYears=years;
+  document.querySelectorAll('#panel-world .range-btn').forEach((b,i)=>{
+    b.classList.toggle('active',[1,3,5,0][i]===years);
+  });
+  renderWorldChart(years);
+}
 
-            priceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatVND(context.parsed.y) + ' VNĐ/lít';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatVND(value) + ' VNĐ';
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
-                    }
-                }
-            });
+function renderWorldStats(){
+  const prices=BRENT.map(r=>r[1]);
+  const latest=BRENT[BRENT.length-1];
+  const prev=BRENT[BRENT.length-2];
+  const ytdStart=BRENT.find(r=>r[0].startsWith('2026-01'));
+  const diff=latest[1]-prev[1];
+  const ytdDiff=ytdStart?latest[1]-ytdStart[1]:0;
+  const high52=Math.max(...BRENT.slice(-12).map(r=>r[1]));
+  const low52=Math.min(...BRENT.slice(-12).map(r=>r[1]));
+  document.getElementById('world-stats').innerHTML=`
+    <div class="stat teal"><div class="stat-label">🛢️ Brent Hiện Tại</div><div class="stat-val">$${latest[1].toFixed(1)}</div><div class="stat-sub"><span class="badge ${diff>=0?'up':'down'}">${diff>=0?'▲':'▼'} $${Math.abs(diff).toFixed(1)}</span> vs tháng trước</div></div>
+    <div class="stat amber"><div class="stat-label">📅 YTD 2026</div><div class="stat-val">${ytdDiff>=0?'+':''}$${ytdDiff.toFixed(1)}</div><div class="stat-sub">Từ đầu năm 2026</div></div>
+    <div class="stat red"><div class="stat-label">📈 Đỉnh 52 tuần</div><div class="stat-val">$${high52.toFixed(1)}</div><div class="stat-sub">Cao nhất 12 tháng</div></div>
+    <div class="stat green"><div class="stat-label">📉 Đáy 52 tuần</div><div class="stat-val">$${low52.toFixed(1)}</div><div class="stat-sub">Thấp nhất 12 tháng</div></div>
+  `;
+}
+
+function renderWorldChart(years){
+  let data=BRENT;
+  if(years>0){
+    const cutYear=2026-years;
+    const cutMonth=new Date().getMonth()+1;
+    data=BRENT.filter(r=>{
+      const[y,m]=r[0].split('-').map(Number);
+      return y>cutYear||(y===cutYear&&m>=cutMonth);
+    });
+  }
+  const labels=data.map(r=>r[0]);
+  const values=data.map(r=>r[1]);
+  const annotations={};
+  WORLD_EVENTS.forEach((ev,i)=>{
+    if(labels.includes(ev.ym)||labels.some(l=>l.startsWith(ev.ym.slice(0,7)))){
+      const idx=labels.indexOf(ev.ym);
+      if(idx>=0){
+        annotations['wev'+i]={
+          type:'line',xMin:ev.ym,xMax:ev.ym,
+          borderColor:ev.color+'bb',borderWidth:1.5,borderDash:[4,4],
+          label:{content:ev.title.split('–')[0].trim(),display:true,position:'start',
+            color:ev.color,font:{size:10,weight:'bold'},
+            backgroundColor:'rgba(0,0,0,0.5)',padding:{x:6,y:3}}
+        };
+      }
+    }
+  });
+  const ctx=document.getElementById('worldChart').getContext('2d');
+  if(worldChartInst) worldChartInst.destroy();
+  worldChartInst=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Brent Crude (USD/thùng)',
+      data:values,
+      borderColor:'#00d4ff',
+      backgroundColor:'rgba(0,212,255,0.08)',
+      borderWidth:2.5,
+      pointRadius:3,pointHoverRadius:6,
+      fill:true,tension:0.4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      onClick:(e,els)=>{
+        if(!els.length) return;
+        const idx=els[0].index;
+        const ym=labels[idx];
+        const ev=WORLD_EVENTS.find(ev=>ym===ev.ym||ym.startsWith(ev.ym));
+        if(ev) highlightWorldEvent(ev);
+      },
+      plugins:{
+        legend:{labels:{color:'#8899bb',font:{size:12}}},
+        annotation:{annotations},
+        tooltip:{
+          backgroundColor:'#0d1b35',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+          titleColor:'#e8f0fe',bodyColor:'#8899bb',
+          callbacks:{label:({raw})=>` $${raw.toFixed(1)}/thùng`}
         }
+      },
+      scales:{
+        x:{ticks:{color:'#5a6a8a',maxTicksLimit:12,maxRotation:0},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#5a6a8a',callback:v=>'$'+v},grid:{color:'rgba(255,255,255,.04)'},
+          suggestedMin:0}
+      }
+    }
+  });
+}
 
-        // Update table
-        function updateTable() {
-            const tbody = document.getElementById('tableBody');
-            const sortedData = [...filteredData].sort((a, b) => parseDate(b.date) - parseDate(a.date));
-            
-            tbody.innerHTML = sortedData.map(d => `
-                <tr>
-                    <td>${formatDate(d.date)}</td>
-                    <td>${d.product}</td>
-                    <td>${formatVND(d.price)} VNĐ/lít</td>
-                </tr>
-            `).join('');
-        }
+function renderWorldEvents(){
+  document.getElementById('world-events').innerHTML=WORLD_EVENTS.map((ev,i)=>`
+    <div class="event-card" id="wev-${i}" onclick="highlightWorldEvent(WORLD_EVENTS[${i}],this)">
+      <div class="ev-date" style="color:${ev.color}">📌 ${ev.ym}</div>
+      <div class="ev-title">${ev.title}</div>
+      <div class="ev-desc">${ev.desc}</div>
+      <div class="ev-price" style="color:${ev.color}">${ev.price}/thùng</div>
+    </div>
+  `).join('');
+}
 
-        // Sort table
-        let sortDirection = {};
-        function sortTable(columnIndex) {
-            const direction = sortDirection[columnIndex] || 'asc';
-            sortDirection[columnIndex] = direction === 'asc' ? 'desc' : 'asc';
+function highlightWorldEvent(ev,el){
+  document.querySelectorAll('#world-events .event-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  else{
+    const idx=WORLD_EVENTS.indexOf(ev);
+    if(idx>=0) document.getElementById('wev-'+idx)?.classList.add('selected');
+  }
+}
 
-            filteredData.sort((a, b) => {
-                let valA, valB;
-                
-                if (columnIndex === 0) {
-                    valA = parseDate(a.date);
-                    valB = parseDate(b.date);
-                } else if (columnIndex === 1) {
-                    valA = a.product;
-                    valB = b.product;
-                } else {
-                    valA = a.price;
-                    valB = b.price;
-                }
+// Auto-init world tab when first clicked
+document.getElementById('tab-world').addEventListener('click',()=>{
+  if(!worldChartInst) initWorldTab();
+});
+</script>
+<script>
+// ===== TAB 3: FUEL CALCULATOR =====
+const CARS={
+  'Toyota':{
+    'Wigo':{city:5.7,mix:5.2,hwy:4.6,fuel:'ron95'},
+    'Vios':{city:7.1,mix:6.3,hwy:5.5,fuel:'ron95'},
+    'Yaris Cross':{city:6.8,mix:6.1,hwy:5.4,fuel:'ron95'},
+    'Corolla Cross':{city:7.5,mix:6.5,hwy:5.8,fuel:'ron95'},
+    'Camry':{city:9.5,mix:8.1,hwy:7.0,fuel:'ron95'},
+    'Fortuner':{city:11.5,mix:9.8,hwy:8.5,fuel:'ron95'},
+    'Innova Cross':{city:9.2,mix:8.0,hwy:7.0,fuel:'ron95'},
+    'Hilux':{city:10.5,mix:8.8,hwy:7.5,fuel:'do'},
+    'Rush':{city:9.0,mix:7.8,hwy:6.8,fuel:'ron95'},
+  },
+  'Honda':{
+    'Brio':{city:5.9,mix:5.4,hwy:4.9,fuel:'ron95'},
+    'City':{city:7.0,mix:6.2,hwy:5.5,fuel:'ron95'},
+    'Civic':{city:7.8,mix:6.8,hwy:6.0,fuel:'ron95'},
+    'HR-V':{city:7.5,mix:6.5,hwy:5.8,fuel:'ron95'},
+    'CR-V':{city:8.5,mix:7.2,hwy:6.3,fuel:'ron95'},
+    'BR-V':{city:8.2,mix:7.0,hwy:6.1,fuel:'ron95'},
+  },
+  'Hyundai':{
+    'Grand i10':{city:5.8,mix:5.2,hwy:4.7,fuel:'ron95'},
+    'Accent':{city:6.8,mix:6.0,hwy:5.3,fuel:'ron95'},
+    'Elantra':{city:7.5,mix:6.5,hwy:5.8,fuel:'ron95'},
+    'Tucson':{city:9.0,mix:7.8,hwy:6.8,fuel:'ron95'},
+    'Santa Fe':{city:10.2,mix:8.6,hwy:7.4,fuel:'ron95'},
+    'Custin':{city:8.8,mix:7.6,hwy:6.7,fuel:'ron95'},
+    'Stargazer':{city:9.0,mix:7.8,hwy:6.8,fuel:'ron95'},
+  },
+  'Kia':{
+    'Morning':{city:5.6,mix:5.0,hwy:4.5,fuel:'ron95'},
+    'Soluto':{city:7.0,mix:6.1,hwy:5.4,fuel:'ron95'},
+    'K3':{city:7.4,mix:6.4,hwy:5.7,fuel:'ron95'},
+    'Carens':{city:8.5,mix:7.3,hwy:6.4,fuel:'ron95'},
+    'Sportage':{city:9.0,mix:7.8,hwy:6.8,fuel:'ron95'},
+    'Sorento':{city:10.5,mix:8.8,hwy:7.6,fuel:'ron95'},
+    'Carnival':{city:11.2,mix:9.4,hwy:8.0,fuel:'ron95'},
+  },
+  'Mazda':{
+    'Mazda2':{city:7.0,mix:6.2,hwy:5.5,fuel:'ron95'},
+    'Mazda3':{city:7.8,mix:6.8,hwy:6.0,fuel:'ron95'},
+    'CX-3':{city:7.5,mix:6.5,hwy:5.8,fuel:'ron95'},
+    'CX-5':{city:9.0,mix:7.6,hwy:6.5,fuel:'ron95'},
+    'CX-8':{city:10.5,mix:8.8,hwy:7.6,fuel:'ron95'},
+    'CX-30':{city:7.8,mix:6.8,hwy:6.0,fuel:'ron95'},
+  },
+  'Mitsubishi':{
+    'Attrage':{city:6.5,mix:5.8,hwy:5.2,fuel:'ron95'},
+    'Xpander':{city:8.8,mix:7.6,hwy:6.6,fuel:'ron95'},
+    'Outlander':{city:9.5,mix:8.2,hwy:7.2,fuel:'ron95'},
+    'Pajero Sport':{city:11.0,mix:9.5,hwy:8.3,fuel:'do'},
+    'Triton':{city:10.8,mix:9.2,hwy:8.0,fuel:'do'},
+  },
+  'Suzuki':{
+    'Swift':{city:6.2,mix:5.5,hwy:4.9,fuel:'ron95'},
+    'Ertiga':{city:7.8,mix:6.8,hwy:6.0,fuel:'ron95'},
+    'XL7':{city:8.5,mix:7.3,hwy:6.4,fuel:'ron95'},
+  },
+  'Ford':{
+    'EcoSport':{city:8.2,mix:7.0,hwy:6.2,fuel:'ron95'},
+    'Territory':{city:9.0,mix:7.8,hwy:6.8,fuel:'ron95'},
+    'Ranger':{city:10.8,mix:9.0,hwy:7.8,fuel:'do'},
+    'Explorer':{city:13.5,mix:11.0,hwy:9.5,fuel:'ron95'},
+    'Everest':{city:12.0,mix:10.2,hwy:8.8,fuel:'do'},
+  },
+  'MG':{
+    'MG5':{city:7.8,mix:6.8,hwy:6.0,fuel:'ron95'},
+    'ZS':{city:8.2,mix:7.2,hwy:6.3,fuel:'ron95'},
+    'HS':{city:9.5,mix:8.0,hwy:7.0,fuel:'ron95'},
+  },
+  'Nissan':{
+    'Almera':{city:6.9,mix:6.2,hwy:5.6,fuel:'ron95'},
+    'Terra':{city:11.5,mix:9.8,hwy:8.5,fuel:'do'},
+    'X-Trail':{city:9.5,mix:8.2,hwy:7.2,fuel:'ron95'},
+  }
+};
 
-                if (valA < valB) return direction === 'asc' ? -1 : 1;
-                if (valA > valB) return direction === 'asc' ? 1 : -1;
-                return 0;
-            });
+let compareList=[];
+let latestRon95=20000, latestE5=19280; // defaults, overridden from CSV
 
-            updateTable();
-        }
+// Init brand dropdown
+(function initCalc(){
+  const bs=document.getElementById('brand-sel');
+  Object.keys(CARS).sort().forEach(b=>{
+    bs.innerHTML+=`<option value="${b}">${b}</option>`;
+  });
+})();
 
-        // Export functions
-        function exportCSV() {
-            let csv = 'Date,Product,Price (VNĐ/lít)\n';
-            filteredData.forEach(d => {
-                csv += `${d.date},${d.product},${d.price}\n`;
-            });
+// Override prices from CSV data once loaded
+function updateCalcPrices(){
+  if(!allData||!allData.length) return;
+  const sorted=[...allData].sort((a,b)=>parseDMY(a.date)-parseDMY(b.date));
+  const r95=sorted.filter(r=>r.product==='Xăng RON 95-III');
+  const e5=sorted.filter(r=>r.product==='Xăng E5 RON 92-II');
+  if(r95.length) latestRon95=r95[r95.length-1].price;
+  if(e5.length) latestE5=e5[e5.length-1].price;
+  calcFuel();
+}
+// Hook into CSV load
+const _origParse=Papa.parse.bind(Papa);
+setTimeout(()=>{document.getElementById('tab-calc').addEventListener('click',updateCalcPrices,{once:true});},500);
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `pvoil_prices_${currentRange}_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        }
+function onBrandChange(){
+  const brand=document.getElementById('brand-sel').value;
+  const ms=document.getElementById('model-sel');
+  ms.innerHTML='<option value="">-- Chọn dòng xe --</option>';
+  if(brand&&CARS[brand]){
+    Object.keys(CARS[brand]).forEach(m=>{ms.innerHTML+=`<option value="${m}">${m}</option>`;});
+  }
+  document.getElementById('calc-result').innerHTML='<div style="text-align:center;color:var(--text2);padding:40px 0">Chọn xe để xem kết quả</div>';
+}
 
-        function exportJSON() {
-            const json = JSON.stringify(filteredData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `pvoil_prices_${currentRange}_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-        }
+function calcFuel(){
+  const brand=document.getElementById('brand-sel').value;
+  const model=document.getElementById('model-sel').value;
+  if(!brand||!model||!CARS[brand]||!CARS[brand][model]) return;
+  const car=CARS[brand][model];
+  const drive=document.querySelector('input[name="drive"]:checked')?.value||'mix';
+  const fuelType=document.querySelector('input[name="fuel"]:checked')?.value||'ron95';
+  const kmDay=parseFloat(document.getElementById('km-day').value)||50;
+  const consumption=car[drive]; // L/100km
+  const fuelPrice=fuelType==='ron95'?latestRon95:latestE5;
+  const costPerKm=consumption/100*fuelPrice;
+  const costDay=costPerKm*kmDay;
+  const costMonth=costDay*30;
+  const costYear=costDay*365;
+  const literDay=consumption/100*kmDay;
+  const driveLabel={'city':'Nội thành','mix':'Hỗn hợp','hwy':'Cao tốc'}[drive];
+  const fuelLabel=fuelType==='ron95'?'RON 95':'E5 RON 92';
+  document.getElementById('calc-result').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="font-family:var(--font-h);font-size:18px;font-weight:800;color:var(--teal)">${brand} ${model}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">Kiểu lái: ${driveLabel} · Nhiên liệu: ${fuelLabel} · ${fmtPrice(fuelPrice)} đ/lít</div>
+    </div>
+    <div class="result-row"><span class="result-lbl">🔥 Tiêu hao (${driveLabel})</span><span class="result-val">${consumption.toFixed(1)} L/100km</span></div>
+    <div class="result-row"><span class="result-lbl">💵 Chi phí / km</span><span class="result-val">${fmtPrice(Math.round(costPerKm))} đ</span></div>
+    <div class="result-row"><span class="result-lbl">⛽ Xăng / ngày (${kmDay}km)</span><span class="result-val">${literDay.toFixed(1)} lít</span></div>
+    <div class="result-row"><span class="result-lbl">📅 Chi phí / ngày</span><span class="result-val">${fmtPrice(Math.round(costDay))} đ</span></div>
+    <div class="result-row"><span class="result-lbl">📆 Chi phí / tháng</span><span class="result-val big">${fmtPrice(Math.round(costMonth))} đ</span></div>
+    <div class="result-row"><span class="result-lbl">📅 Chi phí / năm</span><span class="result-val">${fmtPrice(Math.round(costYear))} đ</span></div>
+  `;
+}
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', loadData);
-    </script>
+function addToCompare(){
+  const brand=document.getElementById('brand-sel').value;
+  const model=document.getElementById('model-sel').value;
+  if(!brand||!model) return;
+  const drive=document.querySelector('input[name="drive"]:checked')?.value||'mix';
+  const fuelType=document.querySelector('input[name="fuel"]:checked')?.value||'ron95';
+  const kmDay=parseFloat(document.getElementById('km-day').value)||50;
+  if(compareList.length>=4){alert('Tối đa 4 xe để so sánh');return;}
+  if(compareList.find(c=>c.brand===brand&&c.model===model)){alert('Xe này đã trong danh sách');return;}
+  const car=CARS[brand][model];
+  const fuelPrice=fuelType==='ron95'?latestRon95:latestE5;
+  compareList.push({brand,model,car,drive,fuelType,fuelPrice,kmDay});
+  renderCompare();
+}
+
+function renderCompare(){
+  if(!compareList.length){document.getElementById('compare-section').style.display='none';return;}
+  document.getElementById('compare-section').style.display='block';
+  const driveLabel={'city':'Nội thành','mix':'Hỗn hợp','hwy':'Cao tốc'};
+  const head=`<tr><th>Thông số</th>${compareList.map(c=>`<th style="color:var(--teal)">${c.brand} ${c.model}<br><span style="font-size:11px;color:var(--text2)">${driveLabel[c.drive]}</span></th>`).join('')}</tr>`;
+  const rows=[
+    ['Tiêu hao (L/100km)',c=>c.car[c.drive].toFixed(1)+' L'],
+    ['GIá nhiên liệu',c=>fmtPrice(c.fuelPrice)+' đ/L'],
+    ['Chi phí/km',c=>fmtPrice(Math.round(c.car[c.drive]/100*c.fuelPrice))+' đ'],
+    ['Chi phí/ngày',c=>fmtPrice(Math.round(c.car[c.drive]/100*c.fuelPrice*c.kmDay))+' đ'],
+    ['Chi phí/tháng',c=>`<strong style="color:var(--amber)">${fmtPrice(Math.round(c.car[c.drive]/100*c.fuelPrice*c.kmDay*30))} đ</strong>`],
+    ['Chi phí/năm',c=>fmtPrice(Math.round(c.car[c.drive]/100*c.fuelPrice*c.kmDay*365))+' đ'],
+  ].map(([label,fn])=>`<tr><td style="color:var(--text2)">${label}</td>${compareList.map(c=>`<td>${fn(c)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('cmp-head').innerHTML=head;
+  document.getElementById('cmp-body').innerHTML=rows;
+}
+
+function clearCompare(){compareList=[];renderCompare();}
+
+// ===== EXPORT FUNCTIONS =====
+function getExportRows(){
+  let rows=[...filteredByRange];
+  if(currentFilter!=='all'){
+    const keyMap={ron95:'Xăng RON 95-III',e5:'Xăng E5 RON 92-II',do:'Dầu DO 0,05S-II'};
+    const target=keyMap[currentFilter];
+    rows=rows.filter(r=>r.product===target);
+  }
+  return rows.sort((a,b)=>parseDMY(b.date)-parseDMY(a.date));
+}
+
+function exportVnCSV(){
+  const rows=getExportRows();
+  const header='Ngày,Mặt hàng,Giá (VND)';
+  const body=rows.map(r=>`${r.date},"${r.product}",${r.price}`).join('\n');
+  const blob=new Blob([header+'\n'+body],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`gia-xang-vn-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
+}
+
+function exportVnJSON(){
+  const rows=getExportRows();
+  const data=rows.map(r=>({date:r.date,product:r.product,price_vnd:r.price}));
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`gia-xang-vn-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(url);
+}
+</script>
 </body>
 </html>
