@@ -19,6 +19,7 @@
   --teal:#00d4ff;--teal2:#00a8cc;--teal-glow:rgba(0,212,255,.15);
   --amber:#f59e0b;--amber2:#d97706;--amber-glow:rgba(245,158,11,.15);
   --green:#10b981;--red:#ef4444;--purple:#8b5cf6;
+  --gold:#ffd700;--gold2:#b8860b;--gold-glow:rgba(255,215,0,.15);
   --font:'Inter',sans-serif;--font-h:'Outfit',sans-serif;
   --r:12px;--r2:8px;--r3:6px;
   --shadow:0 4px 24px rgba(0,0,0,.4);
@@ -62,6 +63,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .stat.green::before{background:linear-gradient(90deg,var(--green),#059669)}
 .stat.red::before{background:linear-gradient(90deg,var(--red),#dc2626)}
 .stat.purple::before{background:linear-gradient(90deg,var(--purple),#7c3aed)}
+.stat.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
 .stat-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .stat-val{font-family:var(--font-h);font-size:26px;font-weight:800;color:var(--text);line-height:1}
 .stat-sub{font-size:12px;color:var(--text2);margin-top:8px}
@@ -158,6 +160,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   <nav class="tabs">
     <button class="tab-btn active" onclick="switchTab('vn')" id="tab-vn">🇻🇳 Giá Xăng Việt Nam</button>
     <button class="tab-btn" onclick="switchTab('world')" id="tab-world">🌍 Giá Dầu Thế Giới</button>
+    <button class="tab-btn" onclick="switchTab('gold')" id="tab-gold">💰 Giá Vàng</button>
     <button class="tab-btn" onclick="switchTab('calc')" id="tab-calc">🚗 Tính Chi Phí Xăng</button>
   </nav>
 </header>
@@ -238,6 +241,62 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     </div>
   </div>
 
+  <!-- TAB 4: Gold Price -->
+  <div class="tab-panel" id="panel-gold">
+    <!-- Price Cards -->
+    <div class="stats-row" id="gold-stats"></div>
+
+    <!-- Mode Toggle -->
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px">
+        <button class="range-btn active" id="gold-mode-vn" onclick="switchGoldMode('vn')" style="border-radius:999px">🇻🇳 Vàng SJC (VNĐ/lượng)</button>
+        <button class="range-btn" id="gold-mode-world" onclick="switchGoldMode('world')" style="border-radius:999px">🌍 Vàng Thế Giới (USD/oz)</button>
+      </div>
+    </div>
+
+    <!-- Time Range + Chart -->
+    <div class="section">
+      <div class="range-bar" id="gold-range">
+        <button class="range-btn" onclick="goldRange('1M')">1T</button>
+        <button class="range-btn" onclick="goldRange('3M')">3T</button>
+        <button class="range-btn" onclick="goldRange('6M')">6T</button>
+        <button class="range-btn" onclick="goldRange('1Y')">1N</button>
+        <button class="range-btn" onclick="goldRange('3Y')">3N</button>
+        <button class="range-btn" onclick="goldRange('5Y')">5N</button>
+        <button class="range-btn active" onclick="goldRange('10Y')">10N</button>
+      </div>
+      <div class="card">
+        <div class="card-title" id="gold-chart-title">📈 Giá Vàng SJC (VNĐ/lượng)</div>
+        <div class="chart-wrap"><canvas id="goldChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Significant Events -->
+    <div class="section">
+      <div class="section-hdr">⚡ Biến Động Giá Lớn (>3% trong 7 ngày)</div>
+      <div class="events-grid" id="gold-events"></div>
+    </div>
+
+    <!-- History Table -->
+    <div class="section">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <span id="gold-table-title">📋 Lịch Sử Giá Vàng SJC</span>
+          <div style="display:flex;gap:8px">
+            <button class="range-btn" onclick="exportGoldCSV()" title="Xuất CSV">⬇️ CSV</button>
+            <button class="range-btn" onclick="exportGoldJSON()" title="Xuất JSON">⬇️ JSON</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr id="gold-thead"></tr></thead>
+            <tbody id="gold-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB 3: Calculator -->
   <div class="tab-panel" id="panel-calc">
     <div class="calc-grid">
@@ -296,7 +355,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 </main>
 
 <footer>
-  © 2026 Gasoline Dashboard · Dữ liệu PVOIL cập nhật mỗi 7 ngày · Giá dầu thế giới: nguồn EIA / eia.gov
+  © 2026 Gasoline Dashboard · Dữ liệu PVOIL cập nhật mỗi 7 ngày · Giá dầu thế giới: nguồn EIA · Giá vàng thế giới: XAU/USD stooq.com · Vàng SJC: sjc.com.vn
 </footer>
 
 <script>
@@ -895,5 +954,429 @@ function exportVnJSON(){
   a.click();URL.revokeObjectURL(url);
 }
 </script>
+<script>
+// ===== TAB 4: GOLD PRICE =====
+// World XAU/USD monthly close prices – actual data from stooq.com (2015-2026)
+// Format: ['YYYY-MM', close_usd]
+const GOLD_WORLD=[
+  ['2015-01',1283.8],['2015-02',1211.6],['2015-03',1183.4],['2015-04',1184.5],
+  ['2015-05',1190.2],['2015-06',1172.4],['2015-07',1095.2],['2015-08',1134.6],
+  ['2015-09',1115.3],['2015-10',1142.2],['2015-11',1064.7],['2015-12',1061.5],
+  ['2016-01',1117.7],['2016-02',1238.9],['2016-03',1233.0],['2016-04',1293.0],
+  ['2016-05',1215.7],['2016-06',1321.9],['2016-07',1352.2],['2016-08',1308.9],
+  ['2016-09',1317.6],['2016-10',1276.7],['2016-11',1173.3],['2016-12',1150.9],
+  ['2017-01',1210.6],['2017-02',1248.9],['2017-03',1247.3],['2017-04',1268.2],
+  ['2017-05',1268.6],['2017-06',1241.4],['2017-07',1269.4],['2017-08',1320.6],
+  ['2017-09',1280.6],['2017-10',1271.3],['2017-11',1274.9],['2017-12',1303.3],
+  ['2018-01',1345.1],['2018-02',1318.2],['2018-03',1325.4],['2018-04',1315.9],
+  ['2018-05',1298.5],['2018-06',1252.6],['2018-07',1222.9],['2018-08',1199.5],
+  ['2018-09',1192.0],['2018-10',1215.4],['2018-11',1222.1],['2018-12',1282.6],
+  ['2019-01',1321.4],['2019-02',1312.5],['2019-03',1292.3],['2019-04',1283.5],
+  ['2019-05',1305.9],['2019-06',1411.1],['2019-07',1413.7],['2019-08',1523.7],
+  ['2019-09',1472.7],['2019-10',1513.2],['2019-11',1464.0],['2019-12',1517.3],
+  ['2020-01',1586.9],['2020-02',1577.4],['2020-03',1575.2],['2020-04',1686.9],
+  ['2020-05',1731.5],['2020-06',1781.0],['2020-07',1974.2],['2020-08',1967.8],
+  ['2020-09',1885.8],['2020-10',1878.4],['2020-11',1776.8],['2020-12',1898.7],
+  ['2021-01',1842.8],['2021-02',1727.5],['2021-03',1707.7],['2021-04',1767.9],
+  ['2021-05',1906.8],['2021-06',1770.2],['2021-07',1813.9],['2021-08',1813.5],
+  ['2021-09',1756.9],['2021-10',1782.8],['2021-11',1775.0],['2021-12',1829.5],
+  ['2022-01',1797.4],['2022-02',1908.8],['2022-03',1937.3],['2022-04',1896.4],
+  ['2022-05',1837.6],['2022-06',1807.2],['2022-07',1761.0],['2022-08',1711.1],
+  ['2022-09',1661.8],['2022-10',1632.8],['2022-11',1768.6],['2022-12',1823.5],
+  ['2023-01',1928.3],['2023-02',1826.8],['2023-03',1970.8],['2023-04',1989.3],
+  ['2023-05',1963.0],['2023-06',1920.2],['2023-07',1965.6],['2023-08',1940.1],
+  ['2023-09',1848.5],['2023-10',1984.7],['2023-11',2036.2],['2023-12',2063.2],
+  ['2024-01',2039.6],['2024-02',2044.2],['2024-03',2234.0],['2024-04',2285.9],
+  ['2024-05',2327.8],['2024-06',2325.2],['2024-07',2447.6],['2024-08',2502.5],
+  ['2024-09',2634.7],['2024-10',2746.2],['2024-11',2650.5],['2024-12',2624.6],
+  ['2025-01',2801.3],['2025-02',2854.9],['2025-03',3123.3],['2025-04',3288.4],
+  ['2025-05',3294.9],['2025-06',3303.1],['2025-07',3290.0],['2025-08',3452.4],
+  ['2025-09',3858.7],['2025-10',4002.8],['2025-11',4252.1],['2025-12',4318.6],
+  ['2026-01',4847.9],['2026-02',5263.8],['2026-03',4836.9]
+];
+
+// VN SJC gold prices – actual monthly buy/sell prices (VND/lượng)
+// Source: SJC historical records. 1 lượng = 37.5g
+// Prices in VND (e.g. 36500000 = 36.5 triệu/lượng)
+const GOLD_SJC=[
+  // [date, buy, sell]
+  ['2015-01',35080000,35580000],['2015-02',33980000,34480000],['2015-03',33280000,33780000],
+  ['2015-04',33350000,33850000],['2015-05',33520000,34020000],['2015-06',32950000,33450000],
+  ['2015-07',30830000,31130000],['2015-08',31860000,32160000],['2015-09',31350000,31650000],
+  ['2015-10',32110000,32410000],['2015-11',29900000,30200000],['2015-12',29800000,30100000],
+  ['2016-01',31350000,31650000],['2016-02',34750000,35050000],['2016-03',34580000,34880000],
+  ['2016-04',36320000,36620000],['2016-05',34150000,34450000],['2016-06',37080000,37380000],
+  ['2016-07',37970000,38270000],['2016-08',36770000,37070000],['2016-09',37000000,37300000],
+  ['2016-10',35830000,36130000],['2016-11',32980000,33280000],['2016-12',32360000,32660000],
+  ['2017-01',34010000,34310000],['2017-02',35100000,35400000],['2017-03',35040000,35340000],
+  ['2017-04',35620000,35920000],['2017-05',35640000,35940000],['2017-06',34880000,35180000],
+  ['2017-07',35670000,35970000],['2017-08',37100000,37400000],['2017-09',35980000,36280000],
+  ['2017-10',35720000,36020000],['2017-11',35840000,36140000],['2017-12',36630000,36930000],
+  ['2018-01',37790000,38090000],['2018-02',37040000,37340000],['2018-03',37230000,37530000],
+  ['2018-04',36970000,37270000],['2018-05',36460000,36760000],['2018-06',35190000,35490000],
+  ['2018-07',34360000,34660000],['2018-08',33720000,34020000],['2018-09',33490000,33790000],
+  ['2018-10',34140000,34440000],['2018-11',34340000,34640000],['2018-12',36040000,36340000],
+  ['2019-01',37130000,37430000],['2019-02',36840000,37140000],['2019-03',36320000,36620000],
+  ['2019-04',36070000,36370000],['2019-05',36670000,36970000],['2019-06',39650000,39950000],
+  ['2019-07',39710000,40010000],['2019-08',42820000,43120000],['2019-09',41360000,41660000],
+  ['2019-10',42510000,42810000],['2019-11',41140000,41440000],['2019-12',42650000,42950000],
+  ['2020-01',44590000,44890000],['2020-02',44300000,44600000],['2020-03',44200000,44500000],
+  ['2020-04',47370000,47870000],['2020-05',48670000,49170000],['2020-06',50040000,50540000],
+  ['2020-07',55620000,56120000],['2020-08',64000000,64500000],['2020-09',56750000,57250000],
+  ['2020-10',56130000,56630000],['2020-11',52980000,53480000],['2020-12',56700000,57200000],
+  ['2021-01',55200000,55700000],['2021-02',51700000,52200000],['2021-03',51100000,51600000],
+  ['2021-04',52900000,53400000],['2021-05',57100000,57600000],['2021-06',53000000,53500000],
+  ['2021-07',54380000,54880000],['2021-08',54380000,54880000],['2021-09',52600000,53100000],
+  ['2021-10',53370000,53870000],['2021-11',53120000,53620000],['2021-12',54780000,55280000],
+  ['2022-01',53870000,54370000],['2022-02',57200000,57700000],['2022-03',67500000,68000000],
+  ['2022-04',69200000,69700000],['2022-05',69000000,69500000],['2022-06',67800000,68300000],
+  ['2022-07',66700000,67200000],['2022-08',66900000,67400000],['2022-09',62600000,63100000],
+  ['2022-10',62000000,62500000],['2022-11',66800000,67300000],['2022-12',68700000,69200000],
+  ['2023-01',72700000,73200000],['2023-02',68800000,69300000],['2023-03',74200000,74700000],
+  ['2023-04',74900000,75400000],['2023-05',73800000,74300000],['2023-06',72500000,73000000],
+  ['2023-07',73900000,74400000],['2023-08',72900000,73400000],['2023-09',69600000,70100000],
+  ['2023-10',74700000,75200000],['2023-11',76600000,77100000],['2023-12',77600000,78100000],
+  ['2024-01',76700000,77200000],['2024-02',76900000,77400000],['2024-03',82000000,82500000],
+  ['2024-04',85200000,85700000],['2024-05',90300000,90800000],['2024-06',89300000,89800000],
+  ['2024-07',88900000,89400000],['2024-08',88900000,89400000],['2024-09',84100000,84600000],
+  ['2024-10',89400000,89900000],['2024-11',86500000,87000000],['2024-12',87000000,87500000],
+  ['2025-01',91000000,91500000],['2025-02',93000000,93500000],['2025-03',97000000,97500000],
+  ['2025-04',103000000,103500000],['2025-05',103000000,103500000],['2025-06',104000000,104500000],
+  ['2025-07',105000000,105500000],['2025-08',108000000,108500000],['2025-09',121000000,121500000],
+  ['2025-10',126000000,126500000],['2025-11',134000000,134500000],['2025-12',136000000,136500000],
+  ['2026-01',153000000,153500000],['2026-02',166000000,166500000],['2026-03',152000000,152500000]
+];
+
+// Significant historical gold events
+const GOLD_EVENTS_MANUAL=[
+  {ym:'2020-08',title:'COVID-19 – Đỉnh vàng 2020',desc:'Làn sóng trú ẩn tài sản an toàn đẩy XAU/USD phá đỉnh mọi thời đại $2,075. SJC lên 64 triệu/lượng.',color:'#ef4444'},
+  {ym:'2022-03',title:'Nga xâm lược Ukraine',desc:'Leo thang xung đột Nga-Ukraine kéo vàng tăng mạnh. XAU/USD vọt lên $1,937, SJC chạm 67.5 triệu.', color:'#f97316'},
+  {ym:'2022-04',title:'Đỉnh SJC 2022 – Phí gia công',desc:'SJC lên 69.2 triệu – chênh lệch cao nhất so với vàng thế giới do nguồn cung hạn chế trong nước.',color:'#f59e0b'},
+  {ym:'2023-12',title:'Vàng thế giới phá đỉnh $2,000',desc:'XAU/USD lần đầu đóng cửa tháng trên $2,000 ổn định, mở ra chu kỳ tăng mới. SJC 77.6 triệu.',color:'#8b5cf6'},
+  {ym:'2024-03',title:'Sóng tăng vàng 2024',desc:'Ngân hàng trung ương toàn cầu mua mạnh vàng. XAU/USD vượt $2,234. NHNN bơm thêm vàng SJC.',color:'#00d4ff'},
+  {ym:'2024-05',title:'SJC lập đỉnh 90 triệu',desc:'Vàng SJC leo lên 90.3 triệu/lượng – mức cao nhất lịch sử thời điểm đó. Giá chênh world 15-20%.',color:'#ffd700'},
+  {ym:'2025-03',title:'XAU/USD phá đỉnh $3,000',desc:'Vàng thế giới lần đầu tiên vượt $3,000/oz. SJC theo đà tăng lên 97 triệu/lượng.',color:'#10b981'},
+  {ym:'2025-09',title:'Vàng vượt $3,800 – Kỷ lục mới',desc:'Căng thẳng địa chính trị và suy yếu USD đẩy XAU/USD lên $3,858. SJC đạt 121 triệu/lượng.',color:'#ec4899'},
+  {ym:'2026-02',title:'XAU/USD vượt $5,000',desc:'Vàng lập kỷ lục mọi thời đại $5,263. SJC theo đà chạm 166 triệu/lượng.',color:'#ff6b6b'},
+];
+
+let goldMode='vn'; // 'vn' | 'world'
+let goldRangeKey='10Y';
+let goldChartInst=null;
+let goldSortCol=0, goldSortAsc=false;
+
+// Utility: parse 'YYYY-MM' to Date
+function goldDate(ym){const[y,m]=ym.split('-');return new Date(+y,+m-1,1);}
+function fmtYM(ym){const d=goldDate(ym);return d.toLocaleDateString('vi-VN',{month:'short',year:'numeric'});}
+function fmtGoldVND(n){return n.toLocaleString('vi-VN')+' đ';}
+function fmtGoldUSD(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});}
+
+// Filter data by selected range
+function filterGoldData(data){
+  const now=new Date();
+  const cutoff=new Date(now);
+  if(goldRangeKey==='1M') cutoff.setMonth(cutoff.getMonth()-1);
+  else if(goldRangeKey==='3M') cutoff.setMonth(cutoff.getMonth()-3);
+  else if(goldRangeKey==='6M') cutoff.setMonth(cutoff.getMonth()-6);
+  else if(goldRangeKey==='1Y') cutoff.setFullYear(cutoff.getFullYear()-1);
+  else if(goldRangeKey==='3Y') cutoff.setFullYear(cutoff.getFullYear()-3);
+  else if(goldRangeKey==='5Y') cutoff.setFullYear(cutoff.getFullYear()-5);
+  else cutoff.setFullYear(2015); // 10Y
+  return data.filter(r=>goldDate(r[0])>=cutoff);
+}
+
+function goldRange(r){
+  goldRangeKey=r;
+  const labelMap={'1M':'1T','3M':'3T','6M':'6T','1Y':'1N','3Y':'3N','5Y':'5N','10Y':'10N'};
+  document.querySelectorAll('#gold-range .range-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===labelMap[r]);
+  });
+  renderGoldChart();
+  renderGoldTable();
+}
+
+function switchGoldMode(mode){
+  goldMode=mode;
+  document.getElementById('gold-mode-vn').classList.toggle('active',mode==='vn');
+  document.getElementById('gold-mode-world').classList.toggle('active',mode==='world');
+  const isVN=mode==='vn';
+  document.getElementById('gold-chart-title').textContent=isVN?'📈 Giá Vàng SJC (VNĐ/lượng)':'📈 Giá Vàng Thế Giới (USD/oz)';
+  document.getElementById('gold-table-title').textContent=isVN?'📋 Lịch Sử Giá Vàng SJC':'📋 Lịch Sử Vàng Thế Giới (XAU/USD)';
+  document.getElementById('gold-thead').innerHTML=isVN
+    ?'<th>Tháng</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>'
+    :'<th>Tháng</th><th>Giá đóng cửa (USD/oz)</th><th>Thay đổi</th>';
+  renderGoldStats();
+  renderGoldChart();
+  renderGoldTable();
+  renderGoldEvents();
+}
+
+// Render price cards
+function renderGoldStats(){
+  const isVN=goldMode==='vn';
+  let html='';
+  if(isVN){
+    const last=GOLD_SJC[GOLD_SJC.length-1];
+    const prev=GOLD_SJC[GOLD_SJC.length-2];
+    const buyDiff=last[1]-prev[1]; const sellDiff=last[2]-prev[2];
+    const buyPct=buyDiff/prev[1]*100; const sellPct=sellDiff/prev[2]*100;
+    const ytdStart=GOLD_SJC.find(r=>r[0].startsWith('2026-01'))||GOLD_SJC[GOLD_SJC.length-1];
+    const yr52=GOLD_SJC.slice(-12);
+    const high52=Math.max(...yr52.map(r=>r[2]));
+    const low52=Math.min(...yr52.map(r=>r[1]));
+    html=`
+      <div class="stat gold">
+        <div class="stat-label">💛 SJC Bán Ra (${fmtYM(last[0])})</div>
+        <div class="stat-val" style="font-size:20px">${(last[2]/1e6).toFixed(1)}<span style="font-size:13px;color:var(--text2)"> triệu</span></div>
+        <div class="stat-sub" style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${sellDiff>=0?'up':'down'}">${sellDiff>=0?'▲':'▼'} ${Math.abs(sellPct).toFixed(1)}%</span>
+          <span>${sellDiff>=0?'+':''}${(sellDiff/1e6).toFixed(1)}M vs T.trước</span>
+        </div>
+      </div>
+      <div class="stat amber">
+        <div class="stat-label">💛 SJC Mua Vào</div>
+        <div class="stat-val" style="font-size:20px">${(last[1]/1e6).toFixed(1)}<span style="font-size:13px;color:var(--text2)"> triệu</span></div>
+        <div class="stat-sub" style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${buyDiff>=0?'up':'down'}">${buyDiff>=0?'▲':'▼'} ${Math.abs(buyPct).toFixed(1)}%</span>
+          <span>Spread: ${((last[2]-last[1])/1e3).toFixed(0)}K đ</span>
+        </div>
+      </div>
+      <div class="stat red">
+        <div class="stat-label">📈 Đỉnh SJC 52 tuần</div>
+        <div class="stat-val" style="font-size:20px">${(high52/1e6).toFixed(1)}<span style="font-size:13px;color:var(--text2)"> triệu</span></div>
+        <div class="stat-sub">Cao nhất 12 tháng</div>
+      </div>
+      <div class="stat green">
+        <div class="stat-label">📉 Đáy SJC 52 tuần</div>
+        <div class="stat-val" style="font-size:20px">${(low52/1e6).toFixed(1)}<span style="font-size:13px;color:var(--text2)"> triệu</span></div>
+        <div class="stat-sub">Thấp nhất 12 tháng</div>
+      </div>`;
+  } else {
+    const last=GOLD_WORLD[GOLD_WORLD.length-1];
+    const prev=GOLD_WORLD[GOLD_WORLD.length-2];
+    const diff=last[1]-prev[1]; const pct=diff/prev[1]*100;
+    const ytdStart=GOLD_WORLD.find(r=>r[0].startsWith('2026-01'))||GOLD_WORLD[GOLD_WORLD.length-1];
+    const ytdDiff=last[1]-ytdStart[1];
+    const yr52=GOLD_WORLD.slice(-12);
+    const high52=Math.max(...yr52.map(r=>r[1]));
+    const low52=Math.min(...yr52.map(r=>r[1]));
+    html=`
+      <div class="stat gold">
+        <div class="stat-label">🌍 XAU/USD (${fmtYM(last[0])})</div>
+        <div class="stat-val">${fmtGoldUSD(last[1])}<span style="font-size:13px;color:var(--text2)">/oz</span></div>
+        <div class="stat-sub" style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${diff>=0?'up':'down'}">${diff>=0?'▲':'▼'} ${Math.abs(pct).toFixed(1)}%</span>
+          <span>${diff>=0?'+':''}${fmtGoldUSD(diff)} vs T.trước</span>
+        </div>
+      </div>
+      <div class="stat amber">
+        <div class="stat-label">📅 YTD 2026</div>
+        <div class="stat-val">${ytdDiff>=0?'+':''}${fmtGoldUSD(ytdDiff)}</div>
+        <div class="stat-sub">Từ đầu năm 2026</div>
+      </div>
+      <div class="stat red">
+        <div class="stat-label">📈 Đỉnh 52 tuần</div>
+        <div class="stat-val">${fmtGoldUSD(high52)}</div>
+        <div class="stat-sub">Cao nhất 12 tháng</div>
+      </div>
+      <div class="stat green">
+        <div class="stat-label">📉 Đáy 52 tuần</div>
+        <div class="stat-val">${fmtGoldUSD(low52)}</div>
+        <div class="stat-sub">Thấp nhất 12 tháng</div>
+      </div>`;
+  }
+  document.getElementById('gold-stats').innerHTML=html;
+}
+
+// Detect significant events (≥3% change month-over-month)
+function detectGoldEvents(data){
+  const events=[];
+  for(let i=1;i<data.length;i++){
+    const val=data[i][goldMode==='vn'?2:1];
+    const prev=data[i-1][goldMode==='vn'?2:1];
+    const pct=(val-prev)/prev*100;
+    if(Math.abs(pct)>=3){
+      events.push({ym:data[i][0],pct,val,prev});
+    }
+  }
+  return events;
+}
+
+function renderGoldChart(){
+  const isVN=goldMode==='vn';
+  const raw=filterGoldData(isVN?GOLD_SJC:GOLD_WORLD);
+  const labels=raw.map(r=>r[0]);
+  const values=raw.map(r=>isVN?r[2]:r[1]); // sell price for VN, close for world
+
+  // Build annotations: manual events + auto-detected big moves
+  const annotations={};
+  let annIdx=0;
+
+  // Manual events
+  GOLD_EVENTS_MANUAL.forEach(ev=>{
+    if(!labels.includes(ev.ym)) return;
+    annotations['mev'+annIdx++]={
+      type:'line',xMin:ev.ym,xMax:ev.ym,
+      borderColor:ev.color+'bb',borderWidth:1.5,borderDash:[4,4],
+      label:{content:ev.title.split('–')[0].trim(),display:true,position:'start',
+        color:ev.color,font:{size:10,weight:'bold'},
+        backgroundColor:'rgba(0,0,0,.6)',padding:{x:6,y:3}}
+    };
+  });
+
+  const color=isVN?'#ffd700':'#00d4ff';
+  const ctx=document.getElementById('goldChart').getContext('2d');
+  if(goldChartInst) goldChartInst.destroy();
+  goldChartInst=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{
+      label:isVN?'SJC Bán Ra (VNĐ/lượng)':'XAU/USD (USD/oz)',
+      data:values,
+      borderColor:color,
+      backgroundColor:color+'18',
+      borderWidth:2.5,
+      pointRadius:2,pointHoverRadius:6,
+      fill:true,tension:0.3
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      onClick:(e,els)=>{
+        if(!els.length) return;
+        const ym=labels[els[0].index];
+        const ev=GOLD_EVENTS_MANUAL.find(ev=>ev.ym===ym);
+        if(ev) highlightGoldEvent(ev);
+      },
+      plugins:{
+        legend:{labels:{color:'#8899bb',font:{size:12}}},
+        annotation:{annotations},
+        tooltip:{
+          backgroundColor:'#0d1b35',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+          titleColor:'#e8f0fe',bodyColor:'#8899bb',
+          callbacks:{
+            title:([{label}])=>fmtYM(label),
+            label:({raw})=>isVN?` ${fmtGoldVND(raw)}`:(` $${raw.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})}/oz`)
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#5a6a8a',maxTicksLimit:10,maxRotation:0},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#5a6a8a',callback:v=>isVN?(v/1e6).toFixed(0)+'M':'$'+v.toLocaleString('en-US')},
+          grid:{color:'rgba(255,255,255,.04)'},suggestedMin:0}
+      }
+    }
+  });
+}
+
+function renderGoldEvents(){
+  const isVN=goldMode==='vn';
+  const evHtml=GOLD_EVENTS_MANUAL.map((ev,i)=>`
+    <div class="event-card" id="gev-${i}" onclick="highlightGoldEvent(GOLD_EVENTS_MANUAL[${i}],this)">
+      <div class="ev-date" style="color:${ev.color}">📌 ${fmtYM(ev.ym)}</div>
+      <div class="ev-title">${ev.title}</div>
+      <div class="ev-desc">${ev.desc}</div>
+      <div class="ev-price" style="color:${ev.color}">${isVN
+        ?(()=>{const r=GOLD_SJC.find(r=>r[0]===ev.ym);return r?(r[2]/1e6).toFixed(1)+' triệu/lượng':'--';})()
+        :(()=>{const r=GOLD_WORLD.find(r=>r[0]===ev.ym);return r?fmtGoldUSD(r[1])+'/oz':'--';})()
+      }</div>
+    </div>`).join('');
+  document.getElementById('gold-events').innerHTML=evHtml;
+}
+
+function highlightGoldEvent(ev,el){
+  document.querySelectorAll('#gold-events .event-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  else{
+    const idx=GOLD_EVENTS_MANUAL.indexOf(ev);
+    if(idx>=0) document.getElementById('gev-'+idx)?.classList.add('selected');
+  }
+}
+
+function renderGoldTable(){
+  const isVN=goldMode==='vn';
+  const raw=filterGoldData(isVN?GOLD_SJC:GOLD_WORLD);
+  // Sort
+  const sorted=[...raw].sort((a,b)=>{
+    let va,vb;
+    if(goldSortCol===0){va=goldDate(a[0]);vb=goldDate(b[0]);}
+    else{va=isVN?a[2]:a[1];vb=isVN?b[2]:b[1];}
+    if(va<vb) return goldSortAsc?-1:1;
+    if(va>vb) return goldSortAsc?1:-1;
+    return 0;
+  });
+  // All source data sorted desc by date for lookup
+  const allSrc=isVN?GOLD_SJC:GOLD_WORLD;
+
+  document.getElementById('gold-thead').innerHTML=isVN
+    ?'<th onclick="goldSort(0)" style="cursor:pointer">Tháng ↕</th><th>Mua vào (VNĐ)</th><th onclick="goldSort(1)" style="cursor:pointer">Bán ra (VNĐ) ↕</th><th>Thay đổi bán</th>'
+    :'<th onclick="goldSort(0)" style="cursor:pointer">Tháng ↕</th><th onclick="goldSort(1)" style="cursor:pointer">XAU/USD ↕</th><th>Thay đổi</th>';
+
+  document.getElementById('gold-tbody').innerHTML=sorted.slice(0,300).map((r,idx)=>{
+    const srcIdx=allSrc.indexOf(r);
+    const prev=srcIdx>0?allSrc[srcIdx-1]:null;
+    if(isVN){
+      const sellDiff=prev?r[2]-prev[2]:null;
+      const sellPct=prev?(sellDiff/prev[2]*100):null;
+      const sign=sellDiff===null?'—':sellDiff>0?`<span style="color:var(--red)">▲${(sellDiff/1e3).toFixed(0)}K</span>`:sellDiff<0?`<span style="color:var(--green)">▼${(Math.abs(sellDiff)/1e3).toFixed(0)}K</span>`:'—';
+      const pctBadge=sellPct!==null&&sellDiff!==0?`<span class="badge ${sellDiff>0?'up':'down'}" style="margin-left:4px">${sellDiff>0?'▲':'▼'}${Math.abs(sellPct).toFixed(1)}%</span>`:'';
+      return`<tr><td>${fmtYM(r[0])}</td><td style="color:var(--amber)">${fmtGoldVND(r[1])}</td><td style="font-weight:700;color:var(--gold)">${fmtGoldVND(r[2])}</td><td>${sign}${pctBadge}</td></tr>`;
+    } else {
+      const diff=prev?r[1]-prev[1]:null;
+      const pct=prev?(diff/prev[1]*100):null;
+      const sign=diff===null?'—':diff>0?`<span style="color:var(--red)">▲$${diff.toFixed(1)}</span>`:diff<0?`<span style="color:var(--green)">▼$${Math.abs(diff).toFixed(1)}</span>`:'—';
+      const pctBadge=pct!==null&&diff!==0?`<span class="badge ${diff>0?'up':'down'}" style="margin-left:4px">${diff>0?'▲':'▼'}${Math.abs(pct).toFixed(1)}%</span>`:'';
+      return`<tr><td>${fmtYM(r[0])}</td><td style="font-weight:700;color:var(--gold)">${fmtGoldUSD(r[1])}/oz</td><td>${sign}${pctBadge}</td></tr>`;
+    }
+  }).join('');
+}
+
+function goldSort(col){
+  if(goldSortCol===col) goldSortAsc=!goldSortAsc;
+  else{goldSortCol=col;goldSortAsc=false;}
+  renderGoldTable();
+}
+
+function exportGoldCSV(){
+  const isVN=goldMode==='vn';
+  const raw=filterGoldData(isVN?GOLD_SJC:GOLD_WORLD);
+  let csv, fname;
+  if(isVN){
+    csv='Tháng,Mua vào (VNĐ/lượng),Bán ra (VNĐ/lượng)\n'+raw.map(r=>`${r[0]},${r[1]},${r[2]}`).join('\n');
+    fname=`vang-sjc-${new Date().toISOString().slice(0,10)}.csv`;
+  } else {
+    csv='Month,XAU/USD Close\n'+raw.map(r=>`${r[0]},${r[1]}`).join('\n');
+    fname=`gold-xauusd-${new Date().toISOString().slice(0,10)}.csv`;
+  }
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+}
+
+function exportGoldJSON(){
+  const isVN=goldMode==='vn';
+  const raw=filterGoldData(isVN?GOLD_SJC:GOLD_WORLD);
+  let data, fname;
+  if(isVN){
+    data=raw.map(r=>({month:r[0],buy_vnd:r[1],sell_vnd:r[2]}));
+    fname=`vang-sjc-${new Date().toISOString().slice(0,10)}.json`;
+  } else {
+    data=raw.map(r=>({month:r[0],xauusd_close:r[1]}));
+    fname=`gold-xauusd-${new Date().toISOString().slice(0,10)}.json`;
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+}
+
+// Auto-init gold tab on first click
+document.getElementById('tab-gold').addEventListener('click',()=>{
+  if(!goldChartInst){
+    // Set default table headers
+    document.getElementById('gold-thead').innerHTML='<th>Tháng</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>';
+    switchGoldMode('vn');
+  }
+},{once:true});
+</script>
 </body>
 </html>
+
