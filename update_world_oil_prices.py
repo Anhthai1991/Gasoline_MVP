@@ -87,11 +87,19 @@ def fetch_brent_monthly() -> dict:
             log.warning("Yahoo Finance returned empty data.")
             return {}
 
+        # Flatten MultiIndex columns if present (yfinance >=0.2.x)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = ['_'.join(str(c) for c in col).strip('_') for col in df.columns]
+        close_col = next((c for c in df.columns if 'close' in c.lower() or c.lower() == 'close'), None)
+        if close_col is None:
+            log.warning("No 'Close' column found. Columns: %s", df.columns.tolist())
+            return {}
+
         # Resample: take last close of each calendar month
-        monthly = df["Close"].resample("ME").last().dropna()
+        monthly = df[close_col].resample("ME").last().dropna()
         result = {}
         for ts, price in monthly.items():
-            ym = ts.strftime("%Y-%m")
+            ym = pd.Timestamp(ts).strftime("%Y-%m")
             result[ym] = round(float(price), 2)
         log.info("Fetched %d monthly Brent prices from Yahoo Finance.", len(result))
         return result
