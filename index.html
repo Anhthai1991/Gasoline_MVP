@@ -1557,7 +1557,7 @@
     function tryInitGoldChart() {
       if (document.getElementById('panel-gold').classList.contains('active') && GOLD_SJC.length && GOLD_WORLD.length) {
         if (!goldChartInst) {
-          document.getElementById('gold-thead').innerHTML = '<th>Tháng</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>';
+          document.getElementById('gold-thead').innerHTML = (goldMode==='world') ? '<th>Tháng</th><th>Giá đóng cửa (USD/oz)</th><th>Thay đổi</th>' : '<th>Ngày</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>';
           switchGoldMode(goldMode || 'vn');
         } else {
           switchGoldMode(goldMode || 'vn');
@@ -1582,16 +1582,10 @@
     Papa.parse('gold_prices.csv', {
       download: true, header: true, skipEmptyLines: true, dynamicTyping: true,
       complete: function (res) {
-        const grouped = {};
-        res.data.forEach(r => {
-          if (r.date && r.buy && r.sell) {
-            const ym = String(r.date).substring(0, 7);
-            grouped[ym] = r;
-          }
-        });
-        GOLD_SJC = Object.keys(grouped).sort().map(ym => {
-          return [ym, parseFloat(grouped[ym].buy) * 1000, parseFloat(grouped[ym].sell) * 1000];
-        });
+        GOLD_SJC = res.data
+          .filter(r => r.date && r.buy && r.sell)
+          .map(r => [String(r.date), parseFloat(r.buy) * 1000, parseFloat(r.sell) * 1000])
+          .sort((a,b) => a[0].localeCompare(b[0]));
         tryInitGoldChart();
       },
       error: () => console.warn('Could not load gold_prices.csv')
@@ -1615,9 +1609,10 @@
     let goldChartInst = null;
     let goldSortCol = 0, goldSortAsc = false;
 
-    // Utility: parse 'YYYY-MM' to Date
-    function goldDate(ym) { const [y, m] = ym.split('-'); return new Date(+y, +m - 1, 1); }
+    // Utility: parse Date strings ('YYYY-MM' or 'YYYY-MM-DD')
+    function goldDate(s) { const [y, m, d] = s.split('-'); return new Date(+y, +m - 1, +(d||1)); }
     function fmtYM(ym) { const d = goldDate(ym); return d.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' }); }
+    function fmtDate(s) { const d = goldDate(s); return d.toLocaleDateString('vi-VN'); }
     function fmtGoldVND(n) { return n.toLocaleString('vi-VN') + ' đ'; }
     function fmtGoldUSD(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
 
@@ -1653,7 +1648,7 @@
       document.getElementById('gold-chart-title').textContent = isVN ? '📈 Giá Vàng SJC (VNĐ/lượng)' : '📈 Giá Vàng Thế Giới (USD/oz)';
       document.getElementById('gold-table-title').textContent = isVN ? '📋 Lịch Sử Giá Vàng SJC' : '📋 Lịch Sử Vàng Thế Giới (XAU/USD)';
       document.getElementById('gold-thead').innerHTML = isVN
-        ? '<th>Tháng</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>'
+        ? '<th>Ngày</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>'
         : '<th>Tháng</th><th>Giá đóng cửa (USD/oz)</th><th>Thay đổi</th>';
       renderGoldStats();
       renderGoldChart();
@@ -1678,11 +1673,11 @@
         const low52 = Math.min(...yr52.map(r => r[1]));
         html = `
       <div class="stat gold">
-        <div class="stat-label">💛 SJC Bán Ra (${fmtYM(last[0])})</div>
+        <div class="stat-label">💛 SJC Bán Ra (${fmtDate(last[0])})</div>
         <div class="stat-val" style="font-size:20px">${(last[2] / 1e6).toFixed(1)}<span style="font-size:13px;color:var(--text2)"> triệu</span></div>
         <div class="stat-sub" style="display:flex;align-items:center;gap:8px">
           <span class="badge ${sellDiff >= 0 ? 'up' : 'down'}">${sellDiff >= 0 ? '▲' : '▼'} ${Math.abs(sellPct).toFixed(1)}%</span>
-          <span>${sellDiff >= 0 ? '+' : ''}${(sellDiff / 1e6).toFixed(1)}M vs T.trước</span>
+          <span>${sellDiff >= 0 ? '+' : ''}${(sellDiff / 1e6).toFixed(1)}M vs ngày trước</span>
         </div>
       </div>
       <div class="stat amber">
@@ -1766,9 +1761,10 @@
 
       // Manual events
       GOLD_EVENTS_MANUAL.forEach(ev => {
-        if (!labels.includes(ev.ym)) return;
+        const matchLabel = isVN ? labels.find(l => l.startsWith(ev.ym)) : (labels.includes(ev.ym) ? ev.ym : null);
+        if (!matchLabel) return;
         annotations['mev' + annIdx++] = {
-          type: 'line', xMin: ev.ym, xMax: ev.ym,
+          type: 'line', xMin: matchLabel, xMax: matchLabel,
           borderColor: ev.color + 'bb', borderWidth: 1.5, borderDash: [4, 4],
           label: {
             content: ev.title.split('–')[0].trim(), display: true, position: 'start',
@@ -1800,7 +1796,7 @@
           onClick: (e, els) => {
             if (!els.length) return;
             const ym = labels[els[0].index];
-            const ev = GOLD_EVENTS_MANUAL.find(ev => ev.ym === ym);
+            const ev = GOLD_EVENTS_MANUAL.find(ev => isVN ? ym.startsWith(ev.ym) : ev.ym === ym);
             if (ev) highlightGoldEvent(ev);
           },
           plugins: {
@@ -1810,7 +1806,7 @@
               backgroundColor: '#0d1b35', borderColor: 'rgba(255,255,255,.1)', borderWidth: 1,
               titleColor: '#e8f0fe', bodyColor: '#8899bb',
               callbacks: {
-                title: ([{ label }]) => fmtYM(label),
+                title: ([{ label }]) => isVN ? fmtDate(label) : fmtYM(label),
                 label: ({ raw }) => isVN ? ` ${fmtGoldVND(raw)}` : (` $${raw.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/oz`)
               }
             }
@@ -1834,7 +1830,7 @@
       <div class="ev-title">${ev.title}</div>
       <div class="ev-desc">${ev.desc}</div>
       <div class="ev-price" style="color:${ev.color}">${isVN
-          ? (() => { const r = GOLD_SJC.find(r => r[0] === ev.ym); return r ? (r[2] / 1e6).toFixed(1) + ' triệu/lượng' : '--'; })()
+          ? (() => { const r = GOLD_SJC.find(r => r[0].startsWith(ev.ym)); return r ? (r[2] / 1e6).toFixed(1) + ' triệu/lượng' : '--'; })()
           : (() => { const r = GOLD_WORLD.find(r => r[0] === ev.ym); return r ? fmtGoldUSD(r[1]) + '/oz' : '--'; })()
         }</div>
     </div>`).join('');
@@ -1866,7 +1862,7 @@
       const allSrc = isVN ? GOLD_SJC : GOLD_WORLD;
 
       document.getElementById('gold-thead').innerHTML = isVN
-        ? '<th onclick="goldSort(0)" style="cursor:pointer">Tháng ↕</th><th>Mua vào (VNĐ)</th><th onclick="goldSort(1)" style="cursor:pointer">Bán ra (VNĐ) ↕</th><th>Thay đổi bán</th>'
+        ? '<th onclick="goldSort(0)" style="cursor:pointer">Ngày ↕</th><th>Mua vào (VNĐ)</th><th onclick="goldSort(1)" style="cursor:pointer">Bán ra (VNĐ) ↕</th><th>Thay đổi bán</th>'
         : '<th onclick="goldSort(0)" style="cursor:pointer">Tháng ↕</th><th onclick="goldSort(1)" style="cursor:pointer">XAU/USD ↕</th><th>Thay đổi</th>';
 
       document.getElementById('gold-tbody').innerHTML = sorted.slice(0, 300).map((r, idx) => {
@@ -1877,7 +1873,7 @@
           const sellPct = prev ? (sellDiff / prev[2] * 100) : null;
           const sign = sellDiff === null ? '—' : sellDiff > 0 ? `<span style="color:var(--red)">▲${(sellDiff / 1e3).toFixed(0)}K</span>` : sellDiff < 0 ? `<span style="color:var(--green)">▼${(Math.abs(sellDiff) / 1e3).toFixed(0)}K</span>` : '—';
           const pctBadge = sellPct !== null && sellDiff !== 0 ? `<span class="badge ${sellDiff > 0 ? 'up' : 'down'}" style="margin-left:4px">${sellDiff > 0 ? '▲' : '▼'}${Math.abs(sellPct).toFixed(1)}%</span>` : '';
-          return `<tr><td>${fmtYM(r[0])}</td><td style="color:var(--amber)">${fmtGoldVND(r[1])}</td><td style="font-weight:700;color:var(--gold)">${fmtGoldVND(r[2])}</td><td>${sign}${pctBadge}</td></tr>`;
+          return `<tr><td>${fmtDate(r[0])}</td><td style="color:var(--amber)">${fmtGoldVND(r[1])}</td><td style="font-weight:700;color:var(--gold)">${fmtGoldVND(r[2])}</td><td>${sign}${pctBadge}</td></tr>`;
         } else {
           const diff = prev ? r[1] - prev[1] : null;
           const pct = prev ? (diff / prev[1] * 100) : null;
@@ -1899,7 +1895,7 @@
       const raw = filterGoldData(isVN ? GOLD_SJC : GOLD_WORLD);
       let csv, fname;
       if (isVN) {
-        csv = 'Tháng,Mua vào (VNĐ/lượng),Bán ra (VNĐ/lượng)\n' + raw.map(r => `${r[0]},${r[1]},${r[2]}`).join('\n');
+        csv = 'Ngày,Mua vào (VNĐ/lượng),Bán ra (VNĐ/lượng)\n' + raw.map(r => `${r[0]},${r[1]},${r[2]}`).join('\n');
         fname = `vang-sjc-${new Date().toISOString().slice(0, 10)}.csv`;
       } else {
         csv = 'Month,XAU/USD Close\n' + raw.map(r => `${r[0]},${r[1]}`).join('\n');
@@ -1915,7 +1911,7 @@
       const raw = filterGoldData(isVN ? GOLD_SJC : GOLD_WORLD);
       let data, fname;
       if (isVN) {
-        data = raw.map(r => ({ month: r[0], buy_vnd: r[1], sell_vnd: r[2] }));
+        data = raw.map(r => ({ date: r[0], buy_vnd: r[1], sell_vnd: r[2] }));
         fname = `vang-sjc-${new Date().toISOString().slice(0, 10)}.json`;
       } else {
         data = raw.map(r => ({ month: r[0], xauusd_close: r[1] }));
@@ -1930,7 +1926,7 @@
     document.getElementById('tab-gold').addEventListener('click', () => {
       if (!goldChartInst) {
         // Set default table headers
-        document.getElementById('gold-thead').innerHTML = '<th>Tháng</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>';
+        document.getElementById('gold-thead').innerHTML = '<th>Ngày</th><th>Mua vào (VNĐ)</th><th>Bán ra (VNĐ)</th><th>Thay đổi bán</th>';
         if (GOLD_SJC.length && GOLD_WORLD.length) {
           switchGoldMode('vn');
         }
