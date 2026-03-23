@@ -1,0 +1,47 @@
+name: Auto Update World Oil Prices
+
+on:
+  schedule:
+    # Daily at 02:00 UTC = 09:00 Vietnam time (weekdays)
+    - cron: '0 2 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  update-world-oil:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run world oil price update script
+        run: python update_world_oil_prices.py
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet brent_oil_prices.csv 2>/dev/null || [ ! -f brent_oil_prices.csv ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push brent_oil_prices.csv
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add brent_oil_prices.csv
+          git commit -m "Auto-update world oil (Brent) prices - $(date +'%Y-%m-%d %H:%M UTC')"
+          git push
