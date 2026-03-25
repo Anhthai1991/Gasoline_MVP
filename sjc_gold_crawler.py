@@ -1,10 +1,14 @@
 """
 SJC Gold Price History Crawler
 ================================
-Crawls daily gold prices (Hồ Chí Minh) from sjc.com.vn/bieu-do-gia-vang
-using headless Chrome and saves to CSV.
+Crawls daily gold prices (Hồ Chí Minh) from sjc.com.vn/bieu-do-gia-vang.
 
-Confirmed DOM structure (March 2026):
+Strategy:
+  - Bỏ qua ngày lễ VN chính thức (thị trường không hoạt động)
+  - Lấy nguyên giá thật, KHÔNG filter theo ngưỡng giá
+  - Chỉ skip khi trang trả về bảng rỗng (thực sự không có dữ liệu)
+
+Confirmed DOM (March 2026):
   - Date input : id="datesearch"  type="text"  format DD/MM/YYYY
   - Submit btn : class="button-datesearch"  text="Tra cứu"
   - Page stack : ASP.NET WebForms
@@ -13,19 +17,14 @@ Requirements:
     pip install selenium webdriver-manager beautifulsoup4
 
 Usage:
-    # Basic — crawl from a start date to today
     python sjc_gold_crawler.py --start 2025-01-01
-
-    # Custom date range and output file
     python sjc_gold_crawler.py --start 2024-01-01 --end 2025-12-31 --output gold_2024.csv
-
-    # Resume / append to existing CSV (skips dates already in file)
     python sjc_gold_crawler.py --start 2025-01-01 --resume
 
 Output CSV columns:
-    date       YYYY-MM-DD
-    buy        nghìn đồng / lượng (mua vào)
-    sell       nghìn đồng / lượng (bán ra)
+    date    YYYY-MM-DD
+    buy     nghìn đồng / lượng (mua vào)
+    sell    nghìn đồng / lượng (bán ra)
 """
 
 import argparse
@@ -46,16 +45,79 @@ log = logging.getLogger("sjc_crawler")
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 SJC_URL      = "https://sjc.com.vn/bieu-do-gia-vang"
-HCM_ROW      = 0        # Hồ Chí Minh is always the first data row in the table
-MAX_HOLIDAY  = 120_000  # prices above this are stale cache from holidays → skip
-WAIT_TIMEOUT = 15       # seconds to wait for page elements
-PAGE_DELAY   = 2.5      # seconds to wait after clicking submit (ASP.NET postback)
-REQUEST_GAP  = 0.5      # seconds between requests
+HCM_ROW      = 0     # Hồ Chí Minh luôn là dòng đầu tiên trong bảng
+WAIT_TIMEOUT = 15    # giây chờ element xuất hiện
+PAGE_DELAY   = 2.5   # giây chờ ASP.NET postback re-render bảng
+REQUEST_GAP  = 0.5   # giây nghỉ giữa các request
+
+
+# ── Vietnamese public holidays ────────────────────────────────────────────────
+def vn_holidays(year: int) -> set[date]:
+    """
+    Trả về tập hợp các ngày lễ chính thức của Việt Nam trong năm `year`.
+    Áp dụng Luật Lao động VN (9 ngày lễ cố định + nghỉ bù nếu trùng cuối tuần).
+
+    Lưu ý Tết Âm lịch: ngày âm lịch thay đổi mỗi năm — cần cập nhật thủ công.
+    Danh sách dưới đây đã bao gồm 2024–2028.
+    """
+    # Ngày lễ dương lịch cố định
+    fixed = [
+        date(year, 1, 1),    # Tết Dương lịch
+        date(year, 4, 30),   # Giải phóng miền Nam
+        date(year, 5, 1),    # Quốc tế Lao động
+        date(year, 9, 2),    # Quốc khánh
+    ]
+
+    # Giỗ Tổ Hùng Vương: 10/3 Âm lịch — ngày dương lịch theo từng năm
+    hung_vuong = {
+        2024: date(2024, 4, 18),
+        2025: date(2025, 4, 7),
+        2026: date(2026, 3, 28),
+        2027: date(2027, 4, 16),
+        2028: date(2028, 4, 4),
+    }
+
+    # Tết Nguyên Đán: thường nghỉ ~7 ngày (29 tháng Chạp → mùng 5 tháng Giêng)
+    tet_ranges = {
+        2024: (date(2024, 2, 8),  date(2024, 2, 14)),
+        2025: (date(2025, 1, 25), date(2025, 2, 2)),
+        2026: (date(2026, 1, 28), date(2026, 2, 5)),
+        2027: (date(2027, 2, 15), date(2027, 2, 21)),
+        2028: (date(2028, 2, 4),  date(2028, 2, 10)),
+    }
+
+    # Ngày lễ điểm: có áp dụng nghỉ bù nếu trùng cuối tuần
+    point_holidays = set(fixed)
+    if year in hung_vuong:
+        point_holidays.add(hung_vuong[year])
+
+    # Tết: range liên tục — không bù thêm (đã nghỉ đủ ngày trong range)
+    tet_days = set()
+    if year in tet_ranges:
+        s, e = tet_ranges[year]
+        d = s
+        while d <= e:
+            tet_days.add(d)
+            d += timedelta(days=1)
+
+    # Nghỉ bù chỉ cho ngày lễ điểm
+    compensations = set()
+    for h in point_holidays:
+        if h.weekday() == 5:   # Thứ 7 → bù Thứ 6 trước
+            compensations.add(h - timedelta(days=1))
+        elif h.weekday() == 6: # Chủ nhật → bù Thứ 2 sau
+            compensations.add(h + timedelta(days=1))
+
+    return point_holidays | tet_days | compensations
+
+
+def is_vn_holiday(d: date) -> bool:
+    return d in vn_holidays(d.year)
 
 
 # ── Data helpers ──────────────────────────────────────────────────────────────
 def _to_float(text: str) -> Optional[float]:
-    """'166,000' or '166.000' → 166000.0  |  empty / invalid → None"""
+    """'166,000' hoặc '166.000' → 166000.0  |  rỗng / lỗi → None"""
     if not text:
         return None
     cleaned = text.strip().replace(",", "").replace(".", "").replace(" ", "").replace("+", "")
@@ -65,22 +127,27 @@ def _to_float(text: str) -> Optional[float]:
         return None
 
 
-def _weekdays(start: date, end: date):
-    """Yield Mon–Fri dates from start to end inclusive."""
+def _trading_days(start: date, end: date) -> list[date]:
+    """Trả về danh sách ngày Thứ 2–6, không phải ngày lễ VN."""
+    result = []
     current = start
     while current <= end:
-        if current.weekday() < 5:
-            yield current
+        if current.weekday() < 5 and not is_vn_holiday(current):
+            result.append(current)
+        else:
+            if current.weekday() < 5:
+                log.debug("  Bỏ qua %s — ngày lễ VN", current)
         current += timedelta(days=1)
+    return result
 
 
 # ── Scraper ───────────────────────────────────────────────────────────────────
 def scrape(start: date, end: date, skip_dates: set = None) -> list[dict]:
     """
-    Scrape SJC gold prices (Hồ Chí Minh only) for every trading day
-    in [start, end]. Returns list of {"date", "buy", "sell"} dicts.
+    Cào giá vàng SJC (Hồ Chí Minh) cho mỗi ngày giao dịch trong [start, end].
+    Trả về list các dict {"date", "buy", "sell"}.
 
-    skip_dates: set of ISO date strings to skip (for resume mode).
+    skip_dates: tập ngày ISO đã có trong file (dùng cho --resume).
     """
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
@@ -108,21 +175,21 @@ def scrape(start: date, end: date, skip_dates: set = None) -> list[dict]:
     wait    = WebDriverWait(driver, WAIT_TIMEOUT)
     records = []
 
-    trading_days = [d for d in _weekdays(start, end) if d.isoformat() not in skip_dates]
-    total        = len(trading_days)
+    days  = [d for d in _trading_days(start, end) if d.isoformat() not in skip_dates]
+    total = len(days)
 
     log.info("Loading SJC page…")
     driver.get(SJC_URL)
     wait.until(EC.presence_of_element_located((By.ID, "datesearch")))
-    log.info("Page loaded. %d trading days to fetch.", total)
+    log.info("Page loaded. %d ngày giao dịch cần cào.", total)
 
     try:
-        for idx, current in enumerate(trading_days, 1):
+        for idx, current in enumerate(days, 1):
             iso_str = current.isoformat()
             vn_str  = current.strftime("%d/%m/%Y")
             log.info("[%d/%d] %s …", idx, total, iso_str)
 
-            # 1. Set date in text input (site expects DD/MM/YYYY)
+            # 1. Nhập ngày vào ô tìm kiếm (định dạng DD/MM/YYYY)
             inp = wait.until(EC.element_to_be_clickable((By.ID, "datesearch")))
             inp.click()
             inp.send_keys(Keys.CONTROL + "a")
@@ -137,15 +204,15 @@ def scrape(start: date, end: date, skip_dates: set = None) -> list[dict]:
             ))
             btn.click()
 
-            # 3. Wait for ASP.NET postback to re-render table
+            # 3. Chờ ASP.NET postback re-render bảng
             time.sleep(PAGE_DELAY)
 
-            # 4. Parse — take only the first data row (Hồ Chí Minh)
+            # 4. Parse — chỉ lấy dòng đầu (Hồ Chí Minh)
             soup  = BeautifulSoup(driver.page_source, "html.parser")
             table = soup.find("table")
 
             if not table:
-                log.warning("  ⚠ No table found — skipping (holiday / no trading)")
+                log.warning("  ⚠ Không tìm thấy bảng — bỏ qua")
                 time.sleep(REQUEST_GAP)
                 continue
 
@@ -156,22 +223,15 @@ def scrape(start: date, end: date, skip_dates: set = None) -> list[dict]:
                     data_rows.append(cells)
 
             if not data_rows:
-                log.warning("  ⚠ Table has no data rows — skipping")
+                log.warning("  ⚠ Bảng không có dữ liệu — bỏ qua")
                 time.sleep(REQUEST_GAP)
                 continue
 
-            hcm_cells = data_rows[HCM_ROW]
-            buy_raw   = hcm_cells[2].split()[0] if len(hcm_cells) > 2 else ""
-            sell_raw  = hcm_cells[3].split()[0] if len(hcm_cells) > 3 else ""
-            buy       = _to_float(buy_raw)
-            sell      = _to_float(sell_raw)
+            hcm   = data_rows[HCM_ROW]
+            buy   = _to_float(hcm[2].split()[0] if len(hcm) > 2 else "")
+            sell  = _to_float(hcm[3].split()[0] if len(hcm) > 3 else "")
 
-            # Skip stale holiday cache (price jumps to ~163,000 on Tết etc.)
-            if buy and buy > MAX_HOLIDAY:
-                log.warning("  ⚠ Price %.0f looks like stale holiday cache — skipping", buy)
-                time.sleep(REQUEST_GAP)
-                continue
-
+            # Lấy nguyên giá — KHÔNG filter theo ngưỡng
             records.append({"date": iso_str, "buy": buy, "sell": sell})
             log.info("  ✓ buy=%-10s sell=%s",
                      f"{buy:,.0f}" if buy else "–",
@@ -182,7 +242,7 @@ def scrape(start: date, end: date, skip_dates: set = None) -> list[dict]:
     finally:
         driver.quit()
 
-    log.info("Done. %d records collected from %d trading days.", len(records), total)
+    log.info("Hoàn tất. %d bản ghi / %d ngày giao dịch.", len(records), total)
     return records
 
 
@@ -191,7 +251,7 @@ FIELDNAMES = ["date", "buy", "sell"]
 
 
 def load_existing_dates(path: Path) -> set:
-    """Return set of date strings already saved (for --resume)."""
+    """Đọc các ngày đã có trong file CSV (dùng cho --resume)."""
     if not path.exists():
         return set()
     with open(path, encoding="utf-8-sig") as f:
@@ -206,26 +266,26 @@ def save_csv(records: list[dict], path: Path, append: bool = False):
         if mode == "w":
             writer.writeheader()
         writer.writerows(records)
-    log.info("✅ %s %d rows → %s",
-             "Appended" if mode == "a" else "Saved", len(records), path)
+    log.info("✅ %s %d dòng → %s",
+             "Append" if mode == "a" else "Saved", len(records), path)
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def parse_args():
     today = date.today()
     p = argparse.ArgumentParser(
-        description="SJC Gold Price Crawler — Hồ Chí Minh, daily history",
+        description="SJC Gold Price Crawler — Hồ Chí Minh, lịch sử ngày",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     p.add_argument("--start",  default="2025-01-01",
-                   help="Start date YYYY-MM-DD (default: 2025-01-01)")
+                   help="Ngày bắt đầu YYYY-MM-DD (mặc định: 2025-01-01)")
     p.add_argument("--end",    default=today.isoformat(),
-                   help=f"End date YYYY-MM-DD (default: today {today})")
+                   help=f"Ngày kết thúc YYYY-MM-DD (mặc định: hôm nay {today})")
     p.add_argument("--output", default="sjc_gold_hcm.csv",
-                   help="Output CSV file (default: sjc_gold_hcm.csv)")
+                   help="File CSV đầu ra (mặc định: sjc_gold_hcm.csv)")
     p.add_argument("--resume", action="store_true",
-                   help="Skip dates already in output file and append new rows")
+                   help="Bỏ qua ngày đã có trong file, append thêm dòng mới")
     return p.parse_args()
 
 
@@ -236,17 +296,17 @@ def main():
     out   = Path(args.output)
 
     if start > end:
-        log.error("--start must be ≤ --end")
+        log.error("--start phải ≤ --end")
         raise SystemExit(1)
 
     skip = load_existing_dates(out) if args.resume else set()
     if skip:
-        log.info("Resume mode: %d dates already saved — skipping them.", len(skip))
+        log.info("Resume: %d ngày đã có — bỏ qua.", len(skip))
 
     records = scrape(start, end, skip_dates=skip)
 
     if not records:
-        log.warning("No new records collected.")
+        log.warning("Không thu thập được dữ liệu mới.")
         return
 
     save_csv(records, out, append=args.resume)
